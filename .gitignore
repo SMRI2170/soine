@@ -1,0 +1,23 @@
+# Gradle
+.gradle/
+build/
+**/build/
+local.properties
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+
+# Kotlin
+.kotlin/
+
+# Apple
+.DS_Store
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Secrets
+.env
+.env.*
+!.env.example
