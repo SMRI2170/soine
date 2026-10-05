@@ -10,6 +10,7 @@ class AndroidAmbientAudioPreferencesStore(context: Context) : AmbientAudioPrefer
         soundId = preferences.getString("sound_id", null),
         volume = if (preferences.contains("volume")) preferences.getFloat("volume", 0f) else null,
         timerPreset = preferences.getString("timer_preset", null),
+        timerStopAtEpochMillis = if (preferences.contains("timer_stop_at")) preferences.getLong("timer_stop_at", 0L) else null,
         muted = if (preferences.contains("muted")) preferences.getBoolean("muted", false) else null,
     )
 
@@ -18,6 +19,7 @@ class AndroidAmbientAudioPreferencesStore(context: Context) : AmbientAudioPrefer
             .putString("sound_id", preferencesValue.soundId)
             .putFloat("volume", preferencesValue.volume)
             .apply { preferencesValue.timerPreset?.let { putString("timer_preset", it.name) } ?: remove("timer_preset") }
+            .apply { preferencesValue.timerStopAtEpochMillis?.let { putLong("timer_stop_at", it) } ?: remove("timer_stop_at") }
             .putBoolean("muted", preferencesValue.muted)
             .commit()
         ) { "Failed to persist ambient audio preferences." }
