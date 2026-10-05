@@ -13,11 +13,16 @@ Shows:
 - primary "一緒に寝る" action
 
 Start behavior:
-1. create and persist session
-2. change companion to SETTLING
-3. start selected ambient sound
-4. transition companion to SLEEPING
-5. allow screen to dim/lock
+1. check whether an active session already exists
+2. create a new session only when none exists
+3. persist the session as PREPARING
+4. transition and persist it as SLEEPING
+5. change companion to SETTLING
+6. start selected ambient sound
+7. transition companion to SLEEPING
+8. allow screen to dim/lock
+
+If the second persistence step fails, the PREPARING record remains recoverable. Repeated start actions return the existing active session instead of creating a duplicate.
 
 Do not require microphone, Health, login, or cloud permissions to start sleeping.
 
