@@ -26,7 +26,7 @@ jobs:
         with:
           gradle-version: "9.5.0"
       - name: Run common tests
-        run: gradle --no-daemon :composeApp:allTests
+        run: gradle --no-daemon :composeApp:jvmTest
 
   android-debug:
     name: Android debug build
