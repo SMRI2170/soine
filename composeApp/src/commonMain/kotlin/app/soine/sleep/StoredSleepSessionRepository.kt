@@ -1,6 +1,6 @@
 package app.soine.sleep
 
-import app.soine.storage.SleepSessionStore
+import app.soine.storage.ForwardSchemaMigrator\nimport app.soine.storage.SchemaMigration\nimport app.soine.storage.SleepSessionStore
 
 /**
  * Local-first SleepSessionRepository backed by one versioned text snapshot.
@@ -101,7 +101,11 @@ internal data class SleepSessionSnapshot(
 )
 
 internal object SleepSessionSnapshotCodec {
-    private const val SNAPSHOT_VERSION = "1"
+    private const val SNAPSHOT_VERSION = "2"
+    private val migrator = ForwardSchemaMigrator(
+        currentVersion = SNAPSHOT_VERSION.toInt(),
+        migrations = listOf(SleepSessionSnapshotV1ToV2),
+    )
 
     fun encode(snapshot: SleepSessionSnapshot): String = buildList {
         add("V\t$SNAPSHOT_VERSION")
@@ -117,6 +121,9 @@ internal object SleepSessionSnapshotCodec {
 
         val version = lines.first().split('\t')
         require(version.size == 2 && version[0] == "V") { "Missing snapshot version." }
+        val storedVersion = version[1].toInt()
+        val migrated = migrator.migrate(storedVersion, raw)
+        if (migrated != raw) return decode(migrated)
         require(version[1] == SNAPSHOT_VERSION) { "Unsupported snapshot version: ${version[1]}" }
 
         var active: SleepSessionRecord? = null
@@ -191,5 +198,20 @@ internal object SleepSessionSnapshotCodec {
             value.substring(index * 2, index * 2 + 2).toInt(radix = 16).toByte()
         }
         return bytes.decodeToString()
+    }
+}
+
+
+private object SleepSessionSnapshotV1ToV2 : SchemaMigration {
+    override val fromVersion: Int = 1
+    override val toVersion: Int = 2
+
+    override fun migrate(payload: String): String {
+        val lines = payload.lineSequence().toList()
+        require(lines.firstOrNull() == "V\t1") { "Expected SleepSession snapshot v1." }
+        return buildList {
+            add("V\t2")
+            addAll(lines.drop(1))
+        }.joinToString("\n")
     }
 }
