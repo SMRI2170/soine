@@ -21,12 +21,13 @@ fun App(
     onWake: () -> Unit,
     onDone: () -> Unit,
     onRetry: () -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     MaterialTheme {
         Surface(Modifier.fillMaxSize()) {
             when (destination) {
                 BedtimeDestination.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-                BedtimeDestination.Bedtime -> BedtimeScreen(onStartSleep)
+                BedtimeDestination.Bedtime -> BedtimeScreen(onStartSleep, onOpenSettings)
                 is BedtimeDestination.Sleeping -> SleepingScreen(destination.session.toUiSession(), onWake)
                 is BedtimeDestination.Morning -> MorningSummaryScreen(destination.session.toUiSession(), onDone)
                 is BedtimeDestination.Error -> Column(
@@ -50,7 +51,10 @@ private fun SleepSessionRecord.toUiSession() = SleepSession(
 )
 
 @Composable
-private fun BedtimeScreen(onStartSleep: () -> Unit) {
+private fun BedtimeScreen(
+    onStartSleep: () -> Unit,
+    onOpenSettings: () -> Unit,
+) {
     Column(
         Modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.SpaceBetween,
@@ -58,7 +62,7 @@ private fun BedtimeScreen(onStartSleep: () -> Unit) {
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("soine", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
-            TextButton(onClick = {}) { Text("設定") }
+            TextButton(onClick = onOpenSettings) { Text("設定") }
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             CompanionScene(SleepState.READY)
@@ -71,10 +75,10 @@ private fun BedtimeScreen(onStartSleep: () -> Unit) {
             OutlinedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
                     Text("環境音", fontWeight = FontWeight.Medium)
-                    Text("なし")
+                    Text("設定画面から選べます")
                     Spacer(Modifier.height(12.dp))
                     Text("スリープタイマー", fontWeight = FontWeight.Medium)
-                    Text("オフ")
+                    Text("設定画面から選べます")
                 }
             }
             Spacer(Modifier.height(16.dp))
