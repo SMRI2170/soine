@@ -9,9 +9,14 @@ plugins {
 
 kotlin {
     androidTarget { compilerOptions { jvmTarget.set(JvmTarget.JVM_11) } }
+
     listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { target ->
-        target.binaries.framework { baseName = "ComposeApp"; isStatic = true }
+        target.binaries.framework {
+            baseName = "ComposeApp"
+            isStatic = true
+        }
     }
+
     sourceSets {
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -19,7 +24,12 @@ kotlin {
             implementation(compose.material3)
             implementation(compose.ui)
         }
-        commonTest.dependencies { implementation(libs.kotlin.test) }
+        androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
+        }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+        }
     }
 }
 
