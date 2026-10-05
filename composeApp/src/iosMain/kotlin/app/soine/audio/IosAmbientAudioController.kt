@@ -32,10 +32,10 @@ class IosAmbientAudioController(
     init {
         interruptionObserver = notificationCenter.addObserverForName(
             name = AVAudioSessionInterruptionNotification,
-            object = session,
+            `object` = session,
             queue = NSOperationQueue.mainQueue,
         ) { notification ->
-            handleInterruption(notification)
+            notification?.let(::handleInterruption)
         }
     }
 
