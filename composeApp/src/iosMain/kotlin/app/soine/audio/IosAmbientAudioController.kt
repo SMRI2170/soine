@@ -4,19 +4,40 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import platform.AVFAudio.AVAudioPlayer
 import platform.AVFAudio.AVAudioSession
 import platform.AVFAudio.AVAudioSessionCategoryPlayback
+import platform.AVFAudio.AVAudioSessionInterruptionNotification
+import platform.AVFAudio.AVAudioSessionInterruptionOptionKey
+import platform.AVFAudio.AVAudioSessionInterruptionTypeKey
 import platform.Foundation.NSBundle
+import platform.Foundation.NSNotification
+import platform.Foundation.NSNotificationCenter
+import platform.Foundation.NSNumber
+import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSURL
+import platform.darwin.NSObjectProtocol
 
 @OptIn(ExperimentalForeignApi::class)
 class IosAmbientAudioController(
     private val resourceNameFor: (AmbientSound) -> String?,
 ) : AmbientAudioController, AutoCloseable {
     private val session = AVAudioSession.sharedInstance()
+    private val notificationCenter = NSNotificationCenter.defaultCenter
     private val observers = mutableSetOf<AmbientAudioStateObserver>()
     private var player: AVAudioPlayer? = null
+    private var interruptionObserver: NSObjectProtocol? = null
+    private var resumeAfterInterruption = false
 
     override var state: AmbientAudioState = AmbientAudioState()
         private set
+
+    init {
+        interruptionObserver = notificationCenter.addObserverForName(
+            name = AVAudioSessionInterruptionNotification,
+            object = session,
+            queue = NSOperationQueue.mainQueue,
+        ) { notification ->
+            handleInterruption(notification)
+        }
+    }
 
     override fun observe(observer: AmbientAudioStateObserver): AutoCloseable {
         observers += observer
@@ -25,7 +46,7 @@ class IosAmbientAudioController(
     }
 
     override fun play(sound: AmbientSound) {
-        stop()
+        stopPlayerOnly()
         val name = resourceNameFor(sound) ?: return
         val dot = name.lastIndexOf('.')
         val base = if (dot >= 0) name.substring(0, dot) else name
@@ -34,17 +55,21 @@ class IosAmbientAudioController(
         val url = NSURL.fileURLWithPath(path)
 
         session.setCategory(AVAudioSessionCategoryPlayback, error = null)
-        val created = AVAudioPlayer(contentsOfURL = url, error = null) ?: run {
-            return
-        }
+        val created = AVAudioPlayer(contentsOfURL = url, error = null) ?: return
         created.numberOfLoops = if (sound.loop) -1 else 0
         created.volume = sound.defaultVolume
         created.prepareToPlay()
-        if (!created.play()) {
-            return
-        }
+        if (!created.play()) return
+
         player = created
-        update(AmbientAudioState(AmbientPlaybackStatus.PLAYING, sound, sound.defaultVolume))
+        update(
+            AmbientAudioState(
+                status = AmbientPlaybackStatus.PLAYING,
+                sound = sound,
+                volume = sound.defaultVolume,
+                stopAtEpochMillis = state.stopAtEpochMillis,
+            )
+        )
     }
 
     override fun pause() {
@@ -55,12 +80,14 @@ class IosAmbientAudioController(
 
     override fun resume() {
         if (state.status != AmbientPlaybackStatus.PAUSED || player == null) return
-        if (player?.play() == true) update(state.copy(status = AmbientPlaybackStatus.PLAYING))
+        if (player?.play() == true) {
+            update(state.copy(status = AmbientPlaybackStatus.PLAYING))
+        }
     }
 
     override fun stop() {
-        player?.stop()
-        player = null
+        resumeAfterInterruption = false
+        stopPlayerOnly()
         update(AmbientAudioState(volume = state.volume))
     }
 
@@ -74,15 +101,43 @@ class IosAmbientAudioController(
         update(state.copy(stopAtEpochMillis = epochMillis))
     }
 
-    /** Called by the iOS notification/lifecycle bridge on audio interruption. */
-    fun handleInterruptionBegan() = pause()
+    private fun handleInterruption(notification: NSNotification) {
+        val userInfo = notification.userInfo ?: return
+        val type = (userInfo[AVAudioSessionInterruptionTypeKey] as? NSNumber)
+            ?.unsignedIntegerValue
+            ?: return
 
-    /** Resume only when the OS indicates resumption is appropriate. */
-    fun handleInterruptionEnded(shouldResume: Boolean) {
-        if (shouldResume) resume()
+        when (type.toLong()) {
+            1L -> {
+                resumeAfterInterruption = state.status == AmbientPlaybackStatus.PLAYING
+                pause()
+            }
+            0L -> {
+                val options = (userInfo[AVAudioSessionInterruptionOptionKey] as? NSNumber)
+                    ?.unsignedIntegerValue
+                    ?.toLong()
+                    ?: 0L
+                val shouldResume = options and 1L != 0L
+                if (resumeAfterInterruption && shouldResume) {
+                    resumeAfterInterruption = false
+                    resume()
+                } else {
+                    resumeAfterInterruption = false
+                }
+            }
+        }
     }
 
-    override fun close() = stop()
+    private fun stopPlayerOnly() {
+        player?.stop()
+        player = null
+    }
+
+    override fun close() {
+        stop()
+        interruptionObserver?.let(notificationCenter::removeObserver)
+        interruptionObserver = null
+    }
 
     private fun update(next: AmbientAudioState) {
         state = next
