@@ -80,6 +80,18 @@ Rules:
 - Interrupted sessions are recoverable after process death/reboot.
 - Sensor analysis enriches a session; it does not own session lifetime.
 
+### Repository contract
+
+`SleepSessionRepository` lives in `commonMain` and is the only persistence boundary used by sleep-domain use cases.
+
+It supports:
+- retrieving the single active session
+- inserting/updating a session
+- idempotently completing a session by ID
+- listing completed sessions newest-first
+
+The contract uses only common Kotlin/domain types. Database handles, Android/iOS storage types and SDK-specific objects stay inside platform adapters.
+
 ## 5. Persistence
 
 Local-first. No account/backend is required for MVP.
@@ -94,6 +106,7 @@ Minimum records:
 - source = manual | recovered
 - createdAt
 - updatedAt
+- schemaVersion
 
 ### SleepSummaryRecord
 - sessionId
