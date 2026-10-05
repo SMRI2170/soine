@@ -1,6 +1,8 @@
 package app.soine.sleep
 
-import app.soine.storage.ForwardSchemaMigrator\nimport app.soine.storage.SchemaMigration\nimport app.soine.storage.SleepSessionStore
+import app.soine.storage.ForwardSchemaMigrator
+import app.soine.storage.SchemaMigration
+import app.soine.storage.SleepSessionStore
 
 /**
  * Local-first SleepSessionRepository backed by one versioned text snapshot.
