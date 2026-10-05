@@ -8,11 +8,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import app.soine.navigation.BedtimeDestination
 import app.soine.sleep.SleepSession
+import app.soine.sleep.SleepSessionRecord
 import app.soine.sleep.SleepState
 import app.soine.sleep.summary
-import app.soine.navigation.BedtimeDestination
-import app.soine.sleep.SleepSessionRecord
 
 @Composable
 fun App(
@@ -22,13 +22,34 @@ fun App(
     onDone: () -> Unit,
     onRetry: () -> Unit,
     onOpenSettings: () -> Unit,
+    ambientSoundLabel: String,
+    defaultTimerLabel: String,
+    audioPlaying: Boolean,
+    remainingTimerLabel: String?,
+    onToggleAudio: () -> Unit,
+    onSetTimer: (Int) -> Unit,
+    onCancelTimer: () -> Unit,
 ) {
     MaterialTheme {
         Surface(Modifier.fillMaxSize()) {
             when (destination) {
                 BedtimeDestination.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-                BedtimeDestination.Bedtime -> BedtimeScreen(onStartSleep, onOpenSettings)
-                is BedtimeDestination.Sleeping -> SleepingScreen(destination.session.toUiSession(), onWake)
+                BedtimeDestination.Bedtime -> BedtimeScreen(
+                    onStartSleep = onStartSleep,
+                    onOpenSettings = onOpenSettings,
+                    ambientSoundLabel = ambientSoundLabel,
+                    defaultTimerLabel = defaultTimerLabel,
+                )
+                is BedtimeDestination.Sleeping -> SleepingScreen(
+                    session = destination.session.toUiSession(),
+                    onWake = onWake,
+                    ambientSoundLabel = ambientSoundLabel,
+                    audioPlaying = audioPlaying,
+                    remainingTimerLabel = remainingTimerLabel,
+                    onToggleAudio = onToggleAudio,
+                    onSetTimer = onSetTimer,
+                    onCancelTimer = onCancelTimer,
+                )
                 is BedtimeDestination.Morning -> MorningSummaryScreen(destination.session.toUiSession(), onDone)
                 is BedtimeDestination.Error -> Column(
                     Modifier.fillMaxSize().padding(24.dp),
@@ -54,6 +75,8 @@ private fun SleepSessionRecord.toUiSession() = SleepSession(
 private fun BedtimeScreen(
     onStartSleep: () -> Unit,
     onOpenSettings: () -> Unit,
+    ambientSoundLabel: String,
+    defaultTimerLabel: String,
 ) {
     Column(
         Modifier.fillMaxSize().padding(24.dp),
@@ -75,10 +98,10 @@ private fun BedtimeScreen(
             OutlinedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
                     Text("環境音", fontWeight = FontWeight.Medium)
-                    Text("設定画面から選べます")
+                    Text(ambientSoundLabel)
                     Spacer(Modifier.height(12.dp))
                     Text("スリープタイマー", fontWeight = FontWeight.Medium)
-                    Text("設定画面から選べます")
+                    Text(defaultTimerLabel)
                 }
             }
             Spacer(Modifier.height(16.dp))
@@ -92,7 +115,17 @@ private fun BedtimeScreen(
 }
 
 @Composable
-private fun SleepingScreen(session: SleepSession, onWake: () -> Unit) {
+private fun SleepingScreen(
+    session: SleepSession,
+    onWake: () -> Unit,
+    ambientSoundLabel: String,
+    audioPlaying: Boolean,
+    remainingTimerLabel: String?,
+    onToggleAudio: () -> Unit,
+    onSetTimer: (Int) -> Unit,
+    onCancelTimer: () -> Unit,
+) {
+    var timerDialog by remember { mutableStateOf(false) }
     val startedAt = session.startedAtEpochMillis
     Column(
         Modifier.fillMaxSize().padding(24.dp),
@@ -108,10 +141,21 @@ private fun SleepingScreen(session: SleepSession, onWake: () -> Unit) {
                 Spacer(Modifier.height(8.dp))
                 Text("開始済み", style = MaterialTheme.typography.bodyMedium)
             }
+            Spacer(Modifier.height(16.dp))
+            Text("環境音: " + ambientSoundLabel)
+            remainingTimerLabel?.let { Text("タイマー: " + it) }
         }
         Column(Modifier.fillMaxWidth()) {
-            TextButton(onClick = {}, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                Text("環境音を調整")
+            TextButton(onClick = onToggleAudio, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                Text(if (audioPlaying) "環境音を一時停止" else "環境音を再生")
+            }
+            TextButton(onClick = { timerDialog = true }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                Text("スリープタイマーを変更")
+            }
+            if (remainingTimerLabel != null) {
+                TextButton(onClick = onCancelTimer, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                    Text("タイマーを解除")
+                }
             }
             Spacer(Modifier.height(8.dp))
             OutlinedButton(
@@ -121,6 +165,53 @@ private fun SleepingScreen(session: SleepSession, onWake: () -> Unit) {
             ) { Text("起きる") }
         }
     }
+
+    if (timerDialog) {
+        SleepTimerDialog(
+            onDismiss = { timerDialog = false },
+            onSetTimer = {
+                timerDialog = false
+                onSetTimer(it)
+            },
+        )
+    }
+}
+
+@Composable
+private fun SleepTimerDialog(
+    onDismiss: () -> Unit,
+    onSetTimer: (Int) -> Unit,
+) {
+    var custom by remember { mutableStateOf("") }
+    val parsed = custom.toIntOrNull()
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("スリープタイマー") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(30, 60, 90).forEach { minutes ->
+                        OutlinedButton(onClick = { onSetTimer(minutes) }) {
+                            Text(minutes.toString() + "分")
+                        }
+                    }
+                }
+                OutlinedTextField(
+                    value = custom,
+                    onValueChange = { custom = it.filter(Char::isDigit).take(4) },
+                    label = { Text("カスタム（分）") },
+                    singleLine = true,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { parsed?.takeIf { it > 0 }?.let(onSetTimer) },
+                enabled = parsed != null && parsed > 0,
+            ) { Text("設定") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("キャンセル") } },
+    )
 }
 
 @Composable

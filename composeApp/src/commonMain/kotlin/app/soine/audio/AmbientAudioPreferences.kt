@@ -5,7 +5,7 @@ data class AmbientAudioPreferences(
     val volume: Float = AmbientSounds.Rain.defaultVolume,
     val timerPreset: SleepTimerPreset? = null,
     val timerStopAtEpochMillis: Long? = null,
-    val muted: Boolean = false,
+    val muted: Boolean = true,
 ) {
     companion object {
         fun safe(
@@ -23,7 +23,7 @@ data class AmbientAudioPreferences(
                     SleepTimerPreset.entries.firstOrNull { it.name == name }
                 },
                 timerStopAtEpochMillis = timerStopAtEpochMillis?.takeIf { it >= 0L },
-                muted = muted ?: false,
+                muted = muted ?: true,
             )
         }
     }
