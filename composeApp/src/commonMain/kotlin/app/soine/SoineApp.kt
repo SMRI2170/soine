@@ -2,13 +2,13 @@ package app.soine
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
-import app.soine.audio.AmbientAudioPreferences
-import app.soine.audio.AmbientAudioPreferencesStore
-import app.soine.audio.SleepTimerPreset
+import app.soine.audio.*
 import app.soine.navigation.*
 import app.soine.privacy.LocalDataDeletionResult
 import app.soine.privacy.LocalDataDeletionService
 import app.soine.sleep.SleepSessionRepository
+import app.soine.sleep.currentTimeMillis
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private enum class SecondaryScreen {
@@ -21,24 +21,65 @@ fun SoineApp(
     repository: SleepSessionRepository,
     audioPreferencesStore: AmbientAudioPreferencesStore,
     localDataDeletionService: LocalDataDeletionService,
+    ambientAudioController: AmbientAudioController,
     appVersion: String = "0.1.0",
 ) {
     val controller = remember(repository) { BedtimeFlowController(repository) }
+    val audioCoordinator = remember(ambientAudioController, audioPreferencesStore) {
+        BedtimeAudioCoordinator(ambientAudioController, audioPreferencesStore, ::currentTimeMillis)
+    }
     var destination by remember { mutableStateOf<BedtimeDestination>(BedtimeDestination.Loading) }
     var secondaryScreen by remember { mutableStateOf<SecondaryScreen?>(null) }
-    var audioPreferences by remember(audioPreferencesStore) {
-        mutableStateOf(audioPreferencesStore.read())
-    }
+    var audioPreferences by remember(audioPreferencesStore) { mutableStateOf(audioPreferencesStore.read()) }
+    var playbackState by remember { mutableStateOf(ambientAudioController.state) }
+    var nowEpochMillis by remember { mutableStateOf(currentTimeMillis()) }
     var deletingLocalData by remember { mutableStateOf(false) }
     var deletionResult by remember { mutableStateOf<LocalDataDeletionResult?>(null) }
     val scope = rememberCoroutineScope()
+
+    DisposableEffect(ambientAudioController) {
+        val subscription = ambientAudioController.observe { playbackState = it }
+        onDispose { subscription.close() }
+    }
+
+    fun refreshAudioPreferences() {
+        audioPreferences = audioPreferencesStore.read()
+        nowEpochMillis = currentTimeMillis()
+    }
 
     fun persistAudioPreferences(next: AmbientAudioPreferences) {
         audioPreferencesStore.write(next)
         audioPreferences = next
     }
 
-    LaunchedEffect(controller) { destination = controller.initialDestination() }
+    LaunchedEffect(controller) {
+        destination = controller.initialDestination()
+        if (destination is BedtimeDestination.Sleeping) {
+            audioCoordinator.recoverNight()
+            refreshAudioPreferences()
+        }
+    }
+
+    LaunchedEffect(destination, audioPreferences.timerStopAtEpochMillis) {
+        while (destination is BedtimeDestination.Sleeping) {
+            delay(1_000)
+            nowEpochMillis = currentTimeMillis()
+            if (audioCoordinator.tick()) refreshAudioPreferences()
+        }
+    }
+
+    val selectedSound = AmbientSounds.find(audioPreferences.soundId) ?: AmbientSounds.Rain
+    val ambientLabel = if (audioPreferences.muted) "なし" else selectedSound.displayName
+    val defaultTimerLabel = audioPreferences.timerPreset?.let { it.minutes.toString() + "分" } ?: "オフ"
+    val remainingMillis = audioPreferences.timerStopAtEpochMillis?.let {
+        (it - nowEpochMillis).coerceAtLeast(0L)
+    }
+    val remainingLabel = remainingMillis?.let {
+        val totalSeconds = (it + 999L) / 1_000L
+        val minutes = totalSeconds / 60L
+        val seconds = totalSeconds % 60L
+        minutes.toString() + "分" + seconds.toString().padStart(2, '0') + "秒"
+    }
 
     MaterialTheme {
         when (secondaryScreen) {
@@ -47,6 +88,12 @@ fun SoineApp(
                 appVersion = appVersion,
                 onSoundSelected = { soundId ->
                     persistAudioPreferences(audioPreferences.copy(soundId = soundId))
+                },
+                onMutedChanged = { muted ->
+                    persistAudioPreferences(audioPreferences.copy(muted = muted))
+                },
+                onVolumeChanged = { volume ->
+                    persistAudioPreferences(audioPreferences.copy(volume = volume))
                 },
                 onTimerPresetSelected = { preset: SleepTimerPreset? ->
                     persistAudioPreferences(audioPreferences.copy(timerPreset = preset))
@@ -66,6 +113,7 @@ fun SoineApp(
                             deletingLocalData = true
                             val result = localDataDeletionService.deleteAll()
                             if (result == LocalDataDeletionResult.Deleted) {
+                                audioCoordinator.endNight()
                                 audioPreferences = audioPreferencesStore.read()
                                 destination = BedtimeDestination.Bedtime
                             }
@@ -82,11 +130,42 @@ fun SoineApp(
             )
             null -> App(
                 destination = destination,
-                onStartSleep = { scope.launch { destination = controller.start() } },
-                onWake = { scope.launch { destination = controller.finish() } },
+                onStartSleep = {
+                    scope.launch {
+                        val next = controller.start()
+                        destination = next
+                        if (next is BedtimeDestination.Sleeping) {
+                            audioCoordinator.beginNight()
+                            refreshAudioPreferences()
+                        }
+                    }
+                },
+                onWake = {
+                    scope.launch {
+                        audioCoordinator.endNight()
+                        refreshAudioPreferences()
+                        destination = controller.finish()
+                    }
+                },
                 onDone = { destination = controller.dismissMorning() },
                 onRetry = { scope.launch { destination = controller.initialDestination() } },
                 onOpenSettings = { secondaryScreen = SecondaryScreen.SETTINGS },
+                ambientSoundLabel = ambientLabel,
+                defaultTimerLabel = defaultTimerLabel,
+                audioPlaying = playbackState.status == AmbientPlaybackStatus.PLAYING,
+                remainingTimerLabel = remainingLabel,
+                onToggleAudio = {
+                    audioCoordinator.togglePlayback()
+                    refreshAudioPreferences()
+                },
+                onSetTimer = { minutes ->
+                    audioCoordinator.startTimer(minutes)
+                    refreshAudioPreferences()
+                },
+                onCancelTimer = {
+                    audioCoordinator.cancelTimer()
+                    refreshAudioPreferences()
+                },
             )
         }
     }

@@ -17,6 +17,8 @@ fun SettingsScreen(
     preferences: AmbientAudioPreferences,
     appVersion: String,
     onSoundSelected: (String) -> Unit,
+    onMutedChanged: (Boolean) -> Unit,
+    onVolumeChanged: (Float) -> Unit,
     onTimerPresetSelected: (SleepTimerPreset?) -> Unit,
     onPrivacyData: () -> Unit,
     onBack: () -> Unit,
@@ -28,6 +30,17 @@ fun SettingsScreen(
         Header("設定", onBack)
 
         SettingSection("環境音") {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("寝るときに環境音を再生")
+                Switch(
+                    checked = !preferences.muted,
+                    onCheckedChange = { onMutedChanged(!it) },
+                )
+            }
             Text("寝るときの標準の音")
             Row(
                 Modifier.fillMaxWidth(),
@@ -41,6 +54,12 @@ fun SettingsScreen(
                     )
                 }
             }
+            Text("音量 " + (preferences.volume * 100).toInt() + "%")
+            Slider(
+                value = preferences.volume,
+                onValueChange = onVolumeChanged,
+                valueRange = 0f..1f,
+            )
         }
 
         SettingSection("スリープタイマー") {
