@@ -10,7 +10,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.soine.sleep.SleepSession
 import app.soine.sleep.SleepState
-import app.soine.sleep.summary\nimport app.soine.navigation.BedtimeDestination\nimport app.soine.sleep.SleepSessionRecord
+import app.soine.sleep.summary
+import app.soine.navigation.BedtimeDestination
+import app.soine.sleep.SleepSessionRecord
 
 @Composable
 fun App(
