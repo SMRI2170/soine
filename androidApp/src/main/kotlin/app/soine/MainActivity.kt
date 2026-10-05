@@ -3,8 +3,8 @@ package app.soine
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import app.soine.audio.AndroidAmbientAudioController
 import app.soine.audio.AndroidAmbientAudioPreferencesStore
+import app.soine.audio.ForegroundAmbientAudioController
 import app.soine.privacy.LocalDataClearer
 import app.soine.privacy.LocalDataDeletionService
 import app.soine.sleep.StoredSleepSessionRepository
@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
         val sleepStore = AndroidSleepSessionStore(applicationContext)
         val repository = StoredSleepSessionRepository(sleepStore)
         val audioPreferences = AndroidAmbientAudioPreferencesStore(applicationContext)
-        val audioController = AndroidAmbientAudioController(applicationContext) { sound ->
+        val audioController = ForegroundAmbientAudioController(applicationContext) { sound ->
             when (sound.id) {
                 "rain" -> R.raw.ambient_rain
                 "waves" -> R.raw.ambient_waves
