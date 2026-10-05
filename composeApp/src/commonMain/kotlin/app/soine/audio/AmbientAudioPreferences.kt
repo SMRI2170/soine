@@ -1,0 +1,33 @@
+package app.soine.audio
+
+data class AmbientAudioPreferences(
+    val soundId: String = AmbientSounds.Rain.id,
+    val volume: Float = AmbientSounds.Rain.defaultVolume,
+    val timerPreset: SleepTimerPreset? = null,
+    val muted: Boolean = false,
+) {
+    companion object {
+        fun safe(
+            soundId: String?,
+            volume: Float?,
+            timerPreset: String?,
+            muted: Boolean?,
+        ): AmbientAudioPreferences {
+            val sound = soundId?.let(AmbientSounds::find) ?: AmbientSounds.Rain
+            return AmbientAudioPreferences(
+                soundId = sound.id,
+                volume = volume?.takeIf { it in 0f..1f } ?: sound.defaultVolume,
+                timerPreset = timerPreset?.let { name ->
+                    SleepTimerPreset.entries.firstOrNull { it.name == name }
+                },
+                muted = muted ?: false,
+            )
+        }
+    }
+}
+
+interface AmbientAudioPreferencesStore {
+    fun read(): AmbientAudioPreferences
+    fun write(preferences: AmbientAudioPreferences)
+    fun clear()
+}
