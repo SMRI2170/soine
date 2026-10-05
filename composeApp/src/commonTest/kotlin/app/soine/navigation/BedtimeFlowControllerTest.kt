@@ -2,6 +2,7 @@ package app.soine.navigation
 
 import app.soine.sleep.*
 import kotlin.test.*
+import kotlin.coroutines.startCoroutine
 
 class BedtimeFlowControllerTest {
     @Test fun startupWithActiveSessionRestoresSleeping() = runSuspend {
@@ -50,7 +51,7 @@ private class FakeRepo(
     override suspend fun getCompletedSessions() = completed.toList()
 }
 private fun record(id: String, status: SleepSessionStatus, endedAt: Long? = null) = SleepSessionRecord(id, 1_000, endedAt, status, createdAtEpochMillis = 1_000, updatedAtEpochMillis = 1_000)
-private fun runSuspend(block: suspend () -> Unit) { kotlin.coroutines.startCoroutine(block, object : kotlin.coroutines.Continuation<Unit> {
+private fun runSuspend(block: suspend () -> Unit) { block.startCoroutine(object : kotlin.coroutines.Continuation<Unit> {
     override val context = kotlin.coroutines.EmptyCoroutineContext
     override fun resumeWith(result: Result<Unit>) = result.getOrThrow()
 }) }
