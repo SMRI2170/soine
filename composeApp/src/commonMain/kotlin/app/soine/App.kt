@@ -9,6 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.soine.navigation.BedtimeDestination
+import app.soine.companion.CompanionIntent
+import app.soine.companion.CompanionStaticFallback
 import app.soine.sleep.SleepSession
 import app.soine.sleep.SleepSessionRecord
 import app.soine.sleep.SleepState
@@ -249,12 +251,22 @@ private fun MorningSummaryScreen(session: SleepSession, onDone: () -> Unit) {
 
 @Composable
 private fun CompanionScene(state: SleepState) {
-    Text(
-        when (state) {
-            SleepState.SLEEPING -> "（ ᵕ ᵕ ） zzz"
-            SleepState.FINISHED -> "（ ˶ᵔ ᵕ ᵔ˶ ）"
-            else -> "（ ・ᴗ・ ）"
-        },
-        style = MaterialTheme.typography.displaySmall,
-    )
+    val intent = when (state) {
+        SleepState.SLEEPING -> CompanionIntent.SLEEP
+        SleepState.FINISHED -> CompanionIntent.WAKE
+        SleepState.READY -> CompanionIntent.IDLE
+    }
+    val artwork = CompanionStaticFallback.forIntent(intent)
+    Surface(
+        modifier = Modifier.size(width = 190.dp, height = 150.dp),
+        shape = RoundedCornerShape(64.dp),
+        tonalElevation = 2.dp,
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                artwork.glyph,
+                style = MaterialTheme.typography.displaySmall,
+            )
+        }
+    }
 }
