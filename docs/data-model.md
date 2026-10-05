@@ -13,6 +13,18 @@ All MVP data is local-first.
 - updatedAtEpochMillis: Long
 - schemaVersion: Int
 
+### MVP persistence
+
+The initial implementation stores the sleep-session repository as one versioned snapshot.
+
+- commonMain owns snapshot encoding/decoding and repository semantics.
+- Android persists the snapshot in a dedicated SharedPreferences file using synchronous commit for critical transitions.
+- iOS persists the same snapshot in NSUserDefaults.
+- corrupt snapshots fail closed instead of being silently overwritten.
+- the storage boundary is replaceable with a database adapter later without changing sleep-domain use cases.
+
+This is intentionally small for the MVP. A database becomes preferable once query volume/history size or migrations justify it.
+
 ## SleepSummaryRecord
 
 - sessionId
