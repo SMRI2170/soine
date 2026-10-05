@@ -34,17 +34,17 @@ class IosAmbientAudioController(
         val url = NSURL.fileURLWithPath(path)
 
         session.setCategory(AVAudioSessionCategoryPlayback, error = null)
-        if (!session.setActive(true, error = null)) return
+        if (!session.setActiveWithOptions(true, 0u, null)) return
 
         val created = AVAudioPlayer(contentsOfURL = url, error = null) ?: run {
-            session.setActive(false, error = null)
+            session.setActiveWithOptions(false, 0u, null)
             return
         }
         created.numberOfLoops = if (sound.loop) -1 else 0
         created.volume = sound.defaultVolume
         created.prepareToPlay()
         if (!created.play()) {
-            session.setActive(false, error = null)
+            session.setActiveWithOptions(false, 0u, null)
             return
         }
         player = created
@@ -65,7 +65,7 @@ class IosAmbientAudioController(
     override fun stop() {
         player?.stop()
         player = null
-        session.setActive(false, error = null)
+        session.setActiveWithOptions(false, 0u, null)
         update(AmbientAudioState(volume = state.volume))
     }
 
