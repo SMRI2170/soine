@@ -8,6 +8,8 @@ plugins {
 }
 
 kotlin {
+    jvm("desktop")
+
     android {
         namespace = "app.soine.shared"
         compileSdk = 37
@@ -35,5 +37,6 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
+        val desktopMain by getting
     }
 }
