@@ -9,6 +9,7 @@ on:
       - "gradle.properties"
       - "settings.gradle.kts"
       - "build.gradle.kts"
+      - ".github/workflows/ios.yml"
   push:
     branches: [main]
     paths:
@@ -18,6 +19,7 @@ on:
       - "gradle.properties"
       - "settings.gradle.kts"
       - "build.gradle.kts"
+      - ".github/workflows/ios.yml"
 
 permissions:
   contents: read
