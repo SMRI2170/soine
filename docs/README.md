@@ -2,6 +2,12 @@
 
 Start here when implementing Soine.
 
+## Planning
+- [issues.md](issues.md) — priorities, Epics, dependency order and AI-agent workflow
+- ../AGENTS.md — repository-wide implementation rules
+- roadmap.md — product milestones
+- GitHub Issues — executable work items
+
 ## Product
 - product.md — product brief
 - mvp-spec.md — MVP contract
@@ -23,7 +29,3 @@ Start here when implementing Soine.
 ## Decisions
 - decisions/0001-kmp-app-shell.md
 - decisions/0002-local-first.md
-
-## Delivery
-- roadmap.md
-- GitHub Issues
