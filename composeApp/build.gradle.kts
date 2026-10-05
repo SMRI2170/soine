@@ -8,8 +8,6 @@ plugins {
 }
 
 kotlin {
-    jvm("desktop")
-
     android {
         namespace = "app.soine.shared"
         compileSdk = 37
@@ -18,6 +16,8 @@ kotlin {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
+
+        withHostTest {}
     }
 
     listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { target ->
@@ -37,6 +37,5 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
-        val desktopMain by getting
     }
 }
