@@ -24,7 +24,7 @@ jobs:
           java-version: "17"
       - uses: gradle/actions/setup-gradle@v5
         with:
-          gradle-version: "9.3.1"
+          gradle-version: "9.5.0"
       - name: Run common tests
         run: gradle --no-daemon :composeApp:allTests
 
@@ -39,6 +39,6 @@ jobs:
           java-version: "17"
       - uses: gradle/actions/setup-gradle@v5
         with:
-          gradle-version: "9.3.1"
+          gradle-version: "9.5.0"
       - name: Build Android debug APK
         run: gradle --no-daemon :androidApp:assembleDebug

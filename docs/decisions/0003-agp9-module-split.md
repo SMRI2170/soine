@@ -24,7 +24,7 @@ Version baseline:
 - Kotlin 2.4.20
 - Compose Multiplatform 1.12.1
 - AGP 9.3.1
-- Gradle 9.3.1
+- Gradle 9.5.0
 
 The AGP choice stays inside Kotlin 2.4.20's documented compatibility range rather than following the newest AGP independently.
 
