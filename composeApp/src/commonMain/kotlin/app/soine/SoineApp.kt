@@ -1,11 +1,13 @@
 package app.soine
 
-import androidx.compose.runtime.*
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.*
 import app.soine.audio.AmbientAudioPreferences
 import app.soine.audio.AmbientAudioPreferencesStore
 import app.soine.audio.SleepTimerPreset
 import app.soine.navigation.*
+import app.soine.privacy.LocalDataDeletionResult
+import app.soine.privacy.LocalDataDeletionService
 import app.soine.sleep.SleepSessionRepository
 import kotlinx.coroutines.launch
 
@@ -18,6 +20,7 @@ private enum class SecondaryScreen {
 fun SoineApp(
     repository: SleepSessionRepository,
     audioPreferencesStore: AmbientAudioPreferencesStore,
+    localDataDeletionService: LocalDataDeletionService,
     appVersion: String = "0.1.0",
 ) {
     val controller = remember(repository) { BedtimeFlowController(repository) }
@@ -26,6 +29,8 @@ fun SoineApp(
     var audioPreferences by remember(audioPreferencesStore) {
         mutableStateOf(audioPreferencesStore.read())
     }
+    var deletingLocalData by remember { mutableStateOf(false) }
+    var deletionResult by remember { mutableStateOf<LocalDataDeletionResult?>(null) }
     val scope = rememberCoroutineScope()
 
     fun persistAudioPreferences(next: AmbientAudioPreferences) {
@@ -46,11 +51,34 @@ fun SoineApp(
                 onTimerPresetSelected = { preset: SleepTimerPreset? ->
                     persistAudioPreferences(audioPreferences.copy(timerPreset = preset))
                 },
-                onPrivacyData = { secondaryScreen = SecondaryScreen.PRIVACY_DATA },
+                onPrivacyData = {
+                    deletionResult = null
+                    secondaryScreen = SecondaryScreen.PRIVACY_DATA
+                },
                 onBack = { secondaryScreen = null },
             )
             SecondaryScreen.PRIVACY_DATA -> PrivacyDataScreen(
-                onBack = { secondaryScreen = SecondaryScreen.SETTINGS },
+                deleting = deletingLocalData,
+                deletionResult = deletionResult,
+                onDeleteAll = {
+                    if (!deletingLocalData) {
+                        scope.launch {
+                            deletingLocalData = true
+                            val result = localDataDeletionService.deleteAll()
+                            if (result == LocalDataDeletionResult.Deleted) {
+                                audioPreferences = audioPreferencesStore.read()
+                                destination = BedtimeDestination.Bedtime
+                            }
+                            deletionResult = result
+                            deletingLocalData = false
+                        }
+                    }
+                },
+                onDismissDeletionResult = { deletionResult = null },
+                onBack = {
+                    deletionResult = null
+                    secondaryScreen = SecondaryScreen.SETTINGS
+                },
             )
             null -> App(
                 destination = destination,

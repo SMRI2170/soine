@@ -2,7 +2,7 @@ package app.soine
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import app.soine.audio.AmbientAudioPreferences
 import app.soine.audio.AmbientSounds
 import app.soine.audio.SleepTimerPreset
+import app.soine.privacy.LocalDataDeletionResult
 
 @Composable
 fun SettingsScreen(
@@ -57,7 +58,7 @@ fun SettingsScreen(
                     FilterChip(
                         selected = preferences.timerPreset == preset,
                         onClick = { onTimerPresetSelected(preset) },
-                        label = { Text("${preset.minutes}分") },
+                        label = { Text(preset.minutes.toString() + "分") },
                     )
                 }
             }
@@ -85,14 +86,20 @@ fun SettingsScreen(
         }
 
         Spacer(Modifier.weight(1f))
-        Text("Soine v$appVersion", style = MaterialTheme.typography.bodySmall)
+        Text("Soine v" + appVersion, style = MaterialTheme.typography.bodySmall)
     }
 }
 
 @Composable
 fun PrivacyDataScreen(
+    deleting: Boolean,
+    deletionResult: LocalDataDeletionResult?,
+    onDeleteAll: () -> Unit,
+    onDismissDeletionResult: () -> Unit,
     onBack: () -> Unit,
 ) {
+    var confirmDeletion by remember { mutableStateOf(false) }
+
     Column(
         Modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -113,15 +120,54 @@ fun PrivacyDataScreen(
         }
 
         SettingSection("データ削除") {
-            Text("端末内のSoineデータをまとめて削除できる機能を用意します。")
-            OutlinedButton(
-                onClick = {},
-                enabled = false,
+            Text("端末内に保存したSoineの記録と設定を削除します。この操作は元に戻せません。")
+            Button(
+                onClick = { confirmDeletion = true },
+                enabled = !deleting,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("すべてのローカルデータを削除（準備中）")
+                if (deleting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("削除中")
+                } else {
+                    Text("すべてのローカルデータを削除")
+                }
+            }
+
+            when (deletionResult) {
+                LocalDataDeletionResult.Deleted ->
+                    Text("端末内のSoineデータを削除しました。")
+                LocalDataDeletionResult.BlockedByActiveSession ->
+                    Text("睡眠記録中は削除できません。先に「起きる」で記録を終了してください。")
+                is LocalDataDeletionResult.Failed ->
+                    Text("一部のデータを削除できませんでした。もう一度お試しください。")
+                null -> Unit
             }
         }
+    }
+
+    if (confirmDeletion) {
+        AlertDialog(
+            onDismissRequest = { confirmDeletion = false },
+            title = { Text("すべてのローカルデータを削除しますか？") },
+            text = { Text("睡眠記録やSoineの設定が端末から削除されます。この操作は元に戻せません。") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmDeletion = false
+                        onDismissDeletionResult()
+                        onDeleteAll()
+                    },
+                ) { Text("削除する") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDeletion = false }) { Text("キャンセル") }
+            },
+        )
     }
 }
 
