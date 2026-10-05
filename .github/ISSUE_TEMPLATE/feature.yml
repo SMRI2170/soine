@@ -1,0 +1,36 @@
+name: Feature
+description: Product or implementation feature
+title: "feat: "
+body:
+  - type: textarea
+    id: experience
+    attributes:
+      label: User experience
+      description: What should the user feel or be able to do?
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Behavior
+      description: State transitions, data, and failure behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+  - type: checkboxes
+    id: concerns
+    attributes:
+      label: Considerations
+      options:
+        - label: Android/iOS differences considered
+        - label: Privacy/permissions considered
+        - label: Battery/background behavior considered
+        - label: Tests identified
