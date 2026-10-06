@@ -28,6 +28,8 @@ fun App(
     onOpenDreamAlbum: () -> Unit,
     onOpenSettings: () -> Unit,
     nightMemoryEntries: List<NightMemoryEntry> = emptyList(),
+    sleepingCompanionIntent: CompanionIntent? = null,
+    quietSleepUi: Boolean = false,
     ambientSoundLabel: String,
     defaultTimerLabel: String,
     audioPlaying: Boolean,
@@ -35,6 +37,8 @@ fun App(
     onToggleAudio: () -> Unit,
     onSetTimer: (Int) -> Unit,
     onCancelTimer: () -> Unit,
+    companionIntent: CompanionIntent?,
+    quietUi: Boolean,
 ) {
     MaterialTheme {
         Surface(Modifier.fillMaxSize()) {
@@ -56,6 +60,8 @@ fun App(
                     onToggleAudio = onToggleAudio,
                     onSetTimer = onSetTimer,
                     onCancelTimer = onCancelTimer,
+                    companionIntent = sleepingCompanionIntent,
+                    quietUi = quietSleepUi,
                 )
                 is BedtimeDestination.Morning -> MorningSummaryScreen(
                     session = destination.session.toUiSession(),
@@ -153,16 +159,21 @@ private fun SleepingScreen(
     ) {
         Text("おやすみ", style = MaterialTheme.typography.titleMedium)
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            CompanionScene(SleepState.SLEEPING)
+            CompanionScene(
+                state = SleepState.SLEEPING,
+                intentOverride = companionIntent,
+            )
             Spacer(Modifier.height(20.dp))
             Text("一緒に眠っています", style = MaterialTheme.typography.headlineSmall)
-            if (startedAt != null) {
-                Spacer(Modifier.height(8.dp))
-                Text("開始済み", style = MaterialTheme.typography.bodyMedium)
+            if (!quietUi) {
+                if (startedAt != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Text("開始済み", style = MaterialTheme.typography.bodyMedium)
+                }
+                Spacer(Modifier.height(16.dp))
+                Text("環境音: " + ambientSoundLabel)
+                remainingTimerLabel?.let { Text("タイマー: " + it) }
             }
-            Spacer(Modifier.height(16.dp))
-            Text("環境音: " + ambientSoundLabel)
-            remainingTimerLabel?.let { Text("タイマー: " + it) }
         }
         Column(Modifier.fillMaxWidth()) {
             TextButton(onClick = onToggleAudio, modifier = Modifier.align(Alignment.CenterHorizontally)) {
@@ -282,8 +293,11 @@ private fun MorningSummaryScreen(
 }
 
 @Composable
-private fun CompanionScene(state: SleepState) {
-    val intent = when (state) {
+private fun CompanionScene(
+    state: SleepState,
+    intentOverride: CompanionIntent? = null,
+) {
+    val intent = intentOverride ?: when (state) {
         SleepState.SLEEPING -> CompanionIntent.SLEEP
         SleepState.FINISHED -> CompanionIntent.WAKE
         SleepState.READY -> CompanionIntent.IDLE
