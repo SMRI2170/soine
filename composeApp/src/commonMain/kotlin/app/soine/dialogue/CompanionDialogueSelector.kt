@@ -46,6 +46,7 @@ data class CompanionDialogueContext(
     val routineContext: RoutineDialogueContext? = null,
     val nightEvents: List<NightEvent> = emptyList(),
     val discoveredDream: DreamDefinition? = null,
+    val bedtimeMoment: BedtimeDialogueMoment = BedtimeDialogueMoment.SETTLING,
     val recentDialogueIdsNewestFirst: List<String> = emptyList(),
     val selectionMode: CompanionDialogueSelectionMode = CompanionDialogueSelectionMode.Default,
 )
@@ -64,11 +65,21 @@ object CompanionDialogueSelector {
             nightEventCandidate(context)?.let(::add)
             routineCandidate(context)?.let(::add)
             relationshipCandidate(context)?.let(::add)
-            addAll(genericCandidates(context.phase))
+            if (context.phase == CompanionDialoguePhase.BEDTIME) {
+                addAll(bedtimeCatalogCandidates(context))
+            } else {
+                addAll(genericCandidates(context.phase))
+            }
         }
 
         val eligible = candidates.filter { !onCooldown(it, context.recentDialogueIdsNewestFirst) }
-        val pool = if (eligible.isNotEmpty()) eligible else genericCandidates(context.phase)
+        val pool = if (eligible.isNotEmpty()) {
+            eligible
+        } else if (context.phase == CompanionDialoguePhase.BEDTIME) {
+            bedtimeCatalogCandidates(context)
+        } else {
+            genericCandidates(context.phase)
+        }
 
         val topPriority = pool.maxOf { it.priority }
         val top = pool.filter { it.priority == topPriority }
@@ -143,43 +154,58 @@ object CompanionDialogueSelector {
     private fun relationshipCandidate(
         context: CompanionDialogueContext,
     ): CompanionDialogue? {
+        if (context.phase == CompanionDialoguePhase.BEDTIME) return null
         return when (context.relationship.familiarityStage) {
             FamiliarityStage.NEW -> null
             FamiliarityStage.WARMING_UP -> CompanionDialogue(
                 id = "relationship-warming",
-                text = if (context.phase == CompanionDialoguePhase.BEDTIME) {
-                    "今日も、そばで眠るね"
-                } else {
-                    "少しずつ、一緒の朝に慣れてきたね"
-                },
+                text = "少しずつ、一緒の朝に慣れてきたね",
                 source = CompanionDialogueSource.RELATIONSHIP,
                 priority = 200,
                 cooldownSelections = 4,
             )
             FamiliarityStage.FAMILIAR -> CompanionDialogue(
                 id = "relationship-familiar",
-                text = if (context.phase == CompanionDialoguePhase.BEDTIME) {
-                    "ここだと、なんだか落ち着くね"
-                } else {
-                    "一緒に起きる朝も、だいぶ増えたね"
-                },
+                text = "一緒に起きる朝も、だいぶ増えたね",
                 source = CompanionDialogueSource.RELATIONSHIP,
                 priority = 210,
                 cooldownSelections = 4,
             )
             FamiliarityStage.CLOSE -> CompanionDialogue(
                 id = "relationship-close",
-                text = if (context.phase == CompanionDialoguePhase.BEDTIME) {
-                    "今日は、もう少し近くで眠るね"
-                } else {
-                    "おはよう。今日もすぐそばにいるよ"
-                },
+                text = "おはよう。今日もすぐそばにいるよ",
                 source = CompanionDialogueSource.RELATIONSHIP,
                 priority = 220,
                 cooldownSelections = 4,
             )
         }
     }
+
+    private fun bedtimeCatalogCandidates(
+        context: CompanionDialogueContext,
+    ): List<CompanionDialogue> =
+        BedtimeDialogueCatalog.eligible(
+            stage = context.relationship.familiarityStage,
+            moment = context.bedtimeMoment,
+        ).map { definition ->
+            val relationshipSpecific =
+                definition.minimumFamiliarity != FamiliarityStage.NEW
+            CompanionDialogue(
+                id = definition.id,
+                text = definition.text,
+                source = if (relationshipSpecific) {
+                    CompanionDialogueSource.RELATIONSHIP
+                } else {
+                    CompanionDialogueSource.GENERIC
+                },
+                priority = if (relationshipSpecific) {
+                    200 + definition.minimumFamiliarity.persistedValue * 10
+                } else {
+                    100
+                },
+                cooldownSelections = 4,
+            )
+        }
 
     private fun genericCandidates(
         phase: CompanionDialoguePhase,
