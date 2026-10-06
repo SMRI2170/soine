@@ -6,6 +6,11 @@ data class CompanionStaticArtwork(
     val contentDescription: String,
 )
 
+data class CompanionStaticPresentation(
+    val artwork: CompanionStaticArtwork,
+    val sleepingPlacement: CompanionSleepingPlacement,
+)
+
 object CompanionStaticFallback {
     private val awake = CompanionStaticArtwork(
         artKey = "companion_awake",
@@ -48,6 +53,12 @@ object CompanionStaticFallback {
             CompanionIntent.LOOK_AT_USER,
             CompanionIntent.MOVE_CLOSER -> awake
         }
+
+    fun forRequest(request: CompanionRenderRequest): CompanionStaticPresentation =
+        CompanionStaticPresentation(
+            artwork = forIntent(request.intent),
+            sleepingPlacement = request.sleepingPlacement,
+        )
 }
 
 data class CompanionRendererFailureEvent(

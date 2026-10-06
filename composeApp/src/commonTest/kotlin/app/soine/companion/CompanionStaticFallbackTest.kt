@@ -22,6 +22,21 @@ class CompanionStaticFallbackTest {
         )
     }
 
+    @Test fun staticFallbackUsesSameSleepingDistanceAsRendererRequest() {
+        val request = CompanionRenderRequest(
+            intent = CompanionIntent.SLEEP,
+            relationshipStage = CompanionRelationshipStage.CLOSE,
+            reduceMotion = true,
+        )
+
+        val presentation = CompanionStaticFallback.forRequest(request)
+
+        assertEquals("companion_sleeping", presentation.artwork.artKey)
+        assertEquals(request.sleepingPlacement, presentation.sleepingPlacement)
+        assertEquals(CompanionSleepingDistance.BESIDE, presentation.sleepingPlacement.distance)
+        assertEquals(0, presentation.sleepingPlacement.transitionDurationMillis)
+    }
+
     @Test fun allIntentsHaveStaticArtwork() {
         CompanionIntent.entries.forEach { intent ->
             val artwork = CompanionStaticFallback.forIntent(intent)

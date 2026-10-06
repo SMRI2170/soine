@@ -27,7 +27,46 @@ class CompanionRenderCoordinatorTest {
 
         assertEquals(CompanionIntent.ROLL_OVER, renderer.latestRequest?.intent)
         assertEquals(CompanionRelationshipStage.FAMILIAR, renderer.latestRequest?.relationshipStage)
+        assertEquals(
+            CompanionSleepingDistance.CLOSER,
+            renderer.latestRequest?.sleepingPlacement?.distance,
+        )
         assertEquals(CompanionSceneVisibility.HIDDEN, renderer.latestRequest?.visibility)
+    }
+
+    @Test fun relationshipStageChangeRecomputesBedPlacement() {
+        val renderer = FakeCompanionRenderer()
+        val coordinator = CompanionRenderCoordinator(renderer)
+
+        coordinator.setSemanticState(
+            intent = CompanionIntent.SLEEP,
+            relationshipStage = CompanionRelationshipStage.CLOSE,
+        )
+
+        assertEquals(
+            CompanionSleepingDistance.BESIDE,
+            coordinator.currentRequest.sleepingPlacement.distance,
+        )
+        assertEquals(0.18f, coordinator.currentRequest.sleepingPlacement.bedOffsetFraction)
+    }
+
+    @Test fun reduceMotionResubmitsSamePlacementWithoutAnimation() {
+        val renderer = FakeCompanionRenderer()
+        val coordinator = CompanionRenderCoordinator(
+            renderer,
+            initialStage = CompanionRelationshipStage.FAMILIAR,
+        )
+        coordinator.setSemanticState(CompanionIntent.SLEEP)
+
+        coordinator.setReduceMotion(true)
+
+        assertTrue(coordinator.currentRequest.reduceMotion)
+        assertEquals(
+            CompanionSleepingDistance.CLOSER,
+            coordinator.currentRequest.sleepingPlacement.distance,
+        )
+        assertEquals(0, coordinator.currentRequest.sleepingPlacement.transitionDurationMillis)
+        assertEquals(0, renderer.latestRequest?.sleepingPlacement?.transitionDurationMillis)
     }
 
     @Test fun becomingVisibleResubmitsLatestSemanticState() {
