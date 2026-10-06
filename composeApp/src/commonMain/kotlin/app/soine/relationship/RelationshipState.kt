@@ -5,16 +5,18 @@ data class RelationshipState(
     val completedSessions: Int = 0,
     val familiarity: Int = 0,
     val discoveredBehaviorIds: Set<String> = emptySet(),
+    val achievedMilestoneIds: Set<String> = emptySet(),
     /** Persisted idempotency keys for sessions already applied to progression. */
     val processedSessionIds: Set<String> = emptySet(),
+    val schemaVersion: Int = CURRENT_SCHEMA_VERSION,
 ) {
-    /**
-     * Applies one completed sleep session exactly once.
-     *
-     * The session id is the idempotency key, so UI double taps, process
-     * recreation and retries after a successful persisted update cannot add
-     * progression twice.
-     */
+    init {
+        require(schemaVersion > 0) { "Relationship schema version must be positive." }
+        require(totalCompletedSleepMillis >= 0) { "Total completed sleep time must not be negative." }
+        require(completedSessions >= 0) { "Completed sessions must not be negative." }
+        require(familiarity >= 0) { "Familiarity must not be negative." }
+    }
+
     fun completeSession(sessionId: String, durationMillis: Long): RelationshipState {
         require(sessionId.isNotBlank()) { "Session id must not be blank." }
         if (sessionId in processedSessionIds) return this
@@ -36,6 +38,10 @@ data class RelationshipState(
     )
     fun completeSession(durationMillis: Long): RelationshipState =
         error("A session id is required for exactly-once progression.")
+
+    companion object {
+        const val CURRENT_SCHEMA_VERSION: Int = 1
+    }
 }
 
 private fun familiarityFor(totalMillis: Long, sessions: Int): Int {
