@@ -3,9 +3,12 @@ package app.soine
 import androidx.compose.ui.window.ComposeUIViewController
 import app.soine.audio.IosAmbientAudioController
 import app.soine.audio.IosAmbientAudioPreferencesStore
+import app.soine.dream.IosDreamDiscoveryStore
+import app.soine.dream.StoredDreamDiscoveryRepository
 import app.soine.privacy.LocalDataClearer
 import app.soine.privacy.LocalDataDeletionService
 import app.soine.relationship.IosRelationshipStateStore
+import app.soine.relationship.StoredCompanionProgressRepository
 import app.soine.sleep.StoredSleepSessionRepository
 import app.soine.storage.IosSleepSessionStore
 
@@ -14,6 +17,9 @@ fun MainViewController() = ComposeUIViewController {
     val repository = StoredSleepSessionRepository(sleepStore)
     val audioPreferences = IosAmbientAudioPreferencesStore()
     val relationshipStore = IosRelationshipStateStore()
+    val companionProgressRepository = StoredCompanionProgressRepository(relationshipStore)
+    val dreamStore = IosDreamDiscoveryStore()
+    val dreamDiscoveryRepository = StoredDreamDiscoveryRepository(dreamStore)
     val audioController = IosAmbientAudioController { sound ->
         when (sound.id) {
             "rain" -> "ambient_rain.wav"
@@ -28,7 +34,15 @@ fun MainViewController() = ComposeUIViewController {
             LocalDataClearer { sleepStore.clear() },
             LocalDataClearer { audioPreferences.clear() },
             LocalDataClearer { relationshipStore.clear() },
+            LocalDataClearer { dreamStore.clear() },
         ),
     )
-    SoineApp(repository, audioPreferences, deletionService, audioController)
+    SoineApp(
+        repository = repository,
+        audioPreferencesStore = audioPreferences,
+        localDataDeletionService = deletionService,
+        ambientAudioController = audioController,
+        dreamDiscoveryRepository = dreamDiscoveryRepository,
+        companionProgressRepository = companionProgressRepository,
+    )
 }
