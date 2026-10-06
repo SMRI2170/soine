@@ -242,6 +242,69 @@ class DreamDiscoveryEngineTest {
         assertEquals("snow", winter.dream?.id)
     }
 
+    @Test fun emptyCatalogFallsBackToPersistableNoDreamDecision() {
+        val engine = DeterministicDreamDiscoveryEngine(
+            repository = InMemoryDreamDefinitionRepository(emptyList()),
+            discoveryChancePercent = 100,
+        )
+
+        val result = assertIs<DreamDiscoveryOutcome.Evaluated>(
+            engine.evaluate(input(session("empty-catalog", 1_000, 2_000)))
+        )
+
+        assertNull(result.decision.dreamId)
+        assertNull(result.discovery)
+        assertNull(result.dream)
+    }
+
+    @Test fun unknownSeasonDoesNotUnlockSeasonalOnlyDream() {
+        val winterOnly = DreamDefinition(
+            id = "snow-unknown-season",
+            title = "雪の夢",
+            shortLine = "雪の上を歩いたみたい",
+            rarity = RarityBand.COMMON,
+            eligibleSeasons = setOf(DreamSeason.WINTER),
+        )
+        val engine = DeterministicDreamDiscoveryEngine(
+            repository = InMemoryDreamDefinitionRepository(listOf(winterOnly)),
+            discoveryChancePercent = 100,
+        )
+
+        val result = assertIs<DreamDiscoveryOutcome.Evaluated>(
+            engine.evaluate(input(session("unknown-season", 1_000, 2_000)))
+        )
+
+        assertNull(result.dream)
+        assertNull(result.discovery)
+    }
+
+    @Test fun deterministicSeedIsStableAcrossEngineInstancesAndCatalogOrder() {
+        val definitions = listOf(
+            dream("alpha", RarityBand.COMMON),
+            dream("beta", RarityBand.UNCOMMON),
+            dream("gamma", RarityBand.RARE),
+        )
+        val firstEngine = DeterministicDreamDiscoveryEngine(
+            repository = InMemoryDreamDefinitionRepository(definitions),
+            discoveryChancePercent = 100,
+        )
+        val secondEngine = DeterministicDreamDiscoveryEngine(
+            repository = InMemoryDreamDefinitionRepository(definitions.reversed()),
+            discoveryChancePercent = 100,
+        )
+        val sameSession = input(session("stable-seed", 1_000, 9_000))
+
+        val first = assertIs<DreamDiscoveryOutcome.Evaluated>(
+            firstEngine.evaluate(sameSession)
+        )
+        val second = assertIs<DreamDiscoveryOutcome.Evaluated>(
+            secondEngine.evaluate(sameSession)
+        )
+
+        assertEquals(first.decision.dreamId, second.decision.dreamId)
+        assertEquals(first.dream?.id, second.dream?.id)
+    }
+
     @Test fun discoveryTimestampUsesCompletedSessionEnd() {
         val repository = InMemoryDreamDefinitionRepository(listOf(dream("cloud")))
         val engine = DeterministicDreamDiscoveryEngine(
