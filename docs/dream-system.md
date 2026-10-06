@@ -96,3 +96,17 @@ InitialDreamCatalog ships 30 authored dreams with stable IDs. Every entry has ti
 The first set deliberately mixes ordinary and slightly magical scenes rather than making rare dreams inherently "better." All four relationship stages are represented, every season has at least two seasonal dreams, and all-year dreams remain the majority so the catalog is useful even when season is unknown.
 
 The initial catalog is bundled locally and exposed through the same DreamDefinitionRepository used by discovery. Copy avoids medical judgement, productivity coaching, guilt, streak language, and rewards for extreme sleep duration.
+
+
+## Dream Album
+
+The shared Compose Dream Album presents the authored catalog as a calm collection rather than a progression grind.
+
+- discovered dreams show title, authored short line, a subdued rarity label, and discovery date
+- undiscovered dreams hide title, copy, rarity, and art identity behind a neutral placeholder
+- discovered entries are ordered before undiscovered entries; recent discoveries appear first
+- selecting a discovered entry opens a lightweight detail dialog
+- an explicit empty state explains that dreams are found occasionally after sleeping and does not pressure the user to collect them
+- collection cards expose merged accessibility descriptions; undiscovered entries are announced simply as undiscovered
+- the first Japanese UI formats discovery dates using the Japan calendar day
+- the screen consumes DreamDiscovery records but does not introduce a new persistence layer; persistence/integration remains separate from presentation
