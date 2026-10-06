@@ -178,7 +178,7 @@ object InitialNightEventCatalog {
             id = "dream-soft-smile",
             type = NightEventType.DREAM,
             weight = 8,
-            line = "眠りながら、少しだけ楽しそうな顔をしてたみたい",
+            line = "眠りながら、口元が少しだけゆるんでたみたい",
             animation = NightEventAnimationIntent.DREAM,
             minimumFamiliarity = 2,
             rarity = RarityBand.RARE,
