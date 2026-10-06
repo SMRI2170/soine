@@ -110,3 +110,17 @@ The shared Compose Dream Album presents the authored catalog as a calm collectio
 - collection cards expose merged accessibility descriptions; undiscovered entries are announced simply as undiscovered
 - the first Japanese UI formats discovery dates using the Japan calendar day
 - the screen consumes DreamDiscovery records but does not introduce a new persistence layer; persistence/integration remains separate from presentation
+
+
+## Local persistence and app integration
+
+Dream discovery state is stored locally as one versioned snapshot containing both evaluation decisions and successful discoveries.
+
+- every completed sleep session may have at most one persisted DreamDiscoveryDecision
+- a no-dream result is persisted as a decision with no dream id, preventing rerolls after reopen or retry
+- a successful evaluation persists its decision and DreamDiscovery in the same snapshot write
+- Dream Album reads discoveries from this repository and refreshes after wake and app startup
+- app startup may evaluate the latest completed session if it has no prior decision, covering interruption between sleep completion and dream persistence
+- Android uses SharedPreferences and iOS uses NSUserDefaults behind the same common DreamDiscoveryStore contract
+- dream storage failure or corruption is isolated from the core sleep lifecycle; a completed sleep session remains completed
+- local "delete all" clears dream discovery state together with sleep, audio, and relationship data
