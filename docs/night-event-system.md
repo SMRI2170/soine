@@ -82,3 +82,19 @@ Each definition owns presentation and generation metadata together:
 The catalog converts definitions into WeightedNightEventCandidate values for the deterministic engine. Generated event ids keep the candidate id after the session prefix, so morning presentation can resolve the exact authored line and animation intent without guessing from event type alone.
 
 Cooldown is candidate-specific. Existing rare candidates still default to three nights, while authored uncommon events may opt into shorter cooldowns. Pool-shortage fallback remains available so cooldown does not produce a broken empty story when no alternative exists.
+
+
+## Morning memory timeline
+
+The morning summary turns generated NightEvents into a small remembered-night timeline.
+
+- generated events are resolved back to their exact InitialNightEventCatalog definition
+- entries are sorted by occurredAt and capped at three
+- each entry shows a local Japanese clock label and its authored morning line
+- animation intent is exposed as a stable artKey so later 2D/3D renderers can replace the current lightweight glyph
+- unknown content ids are omitted instead of inventing presentation copy
+- zero resolved events hides the timeline entirely
+- each timeline row merges accessibility semantics into one time + memory description
+- the same completed session produces the same event selection and order when presented again under the same persisted generation contract
+
+Night-memory generation is enrichment after the sleep session has already completed. Generation or presentation failure therefore falls back to no timeline and never invalidates the completed sleep record.
