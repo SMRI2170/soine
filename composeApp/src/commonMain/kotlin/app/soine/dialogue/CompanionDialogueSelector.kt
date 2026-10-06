@@ -56,15 +56,16 @@ data class CompanionDialogueContext(
  *
  * Only authored, non-medical lines are emitted. Inputs may influence which
  * line is selected, but are never interpolated into health or diagnostic
- * claims. Unknown/unsupported context always falls back to generic dialogue.
+ * claims. Unknown/unsupported context always falls back to authored generic
+ * dialogue.
  */
 object CompanionDialogueSelector {
     fun select(context: CompanionDialogueContext): CompanionDialogue {
         val candidates = buildList {
-            dreamCandidate(context)?.let(::add)
-            nightEventCandidate(context)?.let(::add)
-            routineCandidate(context)?.let(::add)
-            relationshipCandidate(context)?.let(::add)
+            addAll(dreamCandidates(context))
+            addAll(nightEventCandidates(context))
+            addAll(routineCandidates(context))
+            addAll(relationshipCandidates(context))
             if (context.phase == CompanionDialoguePhase.BEDTIME) {
                 addAll(bedtimeCatalogCandidates(context))
             } else {
@@ -72,7 +73,9 @@ object CompanionDialogueSelector {
             }
         }
 
-        val eligible = candidates.filter { !onCooldown(it, context.recentDialogueIdsNewestFirst) }
+        val eligible = candidates.filter {
+            !onCooldown(it, context.recentDialogueIdsNewestFirst)
+        }
         val pool = if (eligible.isNotEmpty()) {
             eligible
         } else if (context.phase == CompanionDialoguePhase.BEDTIME) {
@@ -82,103 +85,131 @@ object CompanionDialogueSelector {
         }
 
         val topPriority = pool.maxOf { it.priority }
-        val top = pool.filter { it.priority == topPriority }
-        return choose(top, context.selectionMode)
-    }
-
-    private fun dreamCandidate(context: CompanionDialogueContext): CompanionDialogue? {
-        if (context.phase != CompanionDialoguePhase.MORNING) return null
-        val dream = context.discoveredDream ?: return null
-        if (dream.id.isBlank() || dream.shortLine.isBlank()) return null
-        return CompanionDialogue(
-            id = "dream-" + dream.id,
-            text = dream.shortLine,
-            source = CompanionDialogueSource.DREAM,
-            priority = 500,
-            cooldownSelections = 8,
+        return choose(
+            candidates = pool.filter { it.priority == topPriority },
+            mode = context.selectionMode,
         )
     }
 
-    private fun nightEventCandidate(context: CompanionDialogueContext): CompanionDialogue? {
-        if (context.phase != CompanionDialoguePhase.MORNING) return null
+    private fun dreamCandidates(
+        context: CompanionDialogueContext,
+    ): List<CompanionDialogue> {
+        if (context.phase != CompanionDialoguePhase.MORNING) return emptyList()
+        val dream = context.discoveredDream ?: return emptyList()
+        if (dream.id.isBlank() || dream.shortLine.isBlank()) return emptyList()
+
+        val dreamRecentlyShown = context.recentDialogueIdsNewestFirst
+            .take(DREAM_GROUP_COOLDOWN_SELECTIONS)
+            .any {
+                it == "dream-" + dream.id ||
+                    it.startsWith("morning-dream-")
+            }
+        if (dreamRecentlyShown) return emptyList()
+
+        return buildList {
+            add(
+                CompanionDialogue(
+                    id = "dream-" + dream.id,
+                    text = dream.shortLine,
+                    source = CompanionDialogueSource.DREAM,
+                    priority = 500,
+                    cooldownSelections = DREAM_GROUP_COOLDOWN_SELECTIONS,
+                )
+            )
+            MorningDialogueCatalog.dreamDefinitions().forEach { definition ->
+                add(
+                    CompanionDialogue(
+                        id = definition.id,
+                        text = definition.text,
+                        source = CompanionDialogueSource.DREAM,
+                        priority = 500,
+                        cooldownSelections = DREAM_GROUP_COOLDOWN_SELECTIONS,
+                    )
+                )
+            }
+        }
+    }
+
+    private fun nightEventCandidates(
+        context: CompanionDialogueContext,
+    ): List<CompanionDialogue> {
+        if (context.phase != CompanionDialoguePhase.MORNING) return emptyList()
         val event = context.nightEvents.maxWithOrNull(
             compareBy<NightEvent> { rarityRank(it.rarity) }
                 .thenBy { eventRank(it.type) }
                 .thenBy { it.occurredAtEpochMillis }
-        ) ?: return null
+        ) ?: return emptyList()
 
-        val line = when (event.type) {
-            NightEventType.TURN_OVER -> "夜中に、ころんと寝返りしてたよ"
-            NightEventType.EAR_TWITCH -> "寝ながら耳がぴくっとしてたみたい"
-            NightEventType.MOVE_CLOSER -> "夜のあいだに、少し近くで眠ってたよ"
-            NightEventType.CURL_UP -> "いつの間にか、まるくなって眠ってたよ"
-            NightEventType.BRIEF_WAKE -> "夜中に一度だけ、そっと目を開けてたみたい"
-            NightEventType.FUNNY_POSE -> "朝見たら、ちょっと不思議な寝相だったよ"
-            NightEventType.DREAM -> "なんだか夢を見ていたみたい"
-            NightEventType.SOUND_REACTION -> "夜の音に、少しだけ反応してたみたい"
+        return MorningDialogueCatalog.forEvent(event.type).map { definition ->
+            CompanionDialogue(
+                id = definition.id,
+                text = definition.text,
+                source = CompanionDialogueSource.NIGHT_EVENT,
+                priority = 400 + rarityRank(event.rarity),
+                cooldownSelections = 3,
+            )
         }
-        return CompanionDialogue(
-            id = "night-event-" + event.type.name.lowercase(),
-            text = line,
-            source = CompanionDialogueSource.NIGHT_EVENT,
-            priority = 400 + rarityRank(event.rarity),
-            cooldownSelections = 3,
-        )
     }
 
-    private fun routineCandidate(context: CompanionDialogueContext): CompanionDialogue? {
-        val profile = context.routineProfile ?: return null
-        val routineContext = context.routineContext ?: return null
+    private fun routineCandidates(
+        context: CompanionDialogueContext,
+    ): List<CompanionDialogue> {
+        val profile = context.routineProfile ?: return emptyList()
+        val routineContext = context.routineContext ?: return emptyList()
         val expectedPhase = when (context.phase) {
             CompanionDialoguePhase.BEDTIME -> RoutineDialoguePhase.BEDTIME
             CompanionDialoguePhase.MORNING -> RoutineDialoguePhase.MORNING
         }
-        if (routineContext.phase != expectedPhase) return null
+        if (routineContext.phase != expectedPhase) return emptyList()
 
-        val selected = RoutineDialogueSelector.select(
+        // RoutineDialogueSelector remains the evidence gate. Repetition is
+        // handled once at this outer selector so authored variants can rotate.
+        val supported = RoutineDialogueSelector.select(
             profile = profile,
             context = routineContext,
-            recentDialogueIds = context.recentDialogueIdsNewestFirst.toSet(),
+            recentDialogueIds = emptySet(),
         )
-        if (selected.source == RoutineDialogueSource.GENERIC) return null
+        if (supported.source == RoutineDialogueSource.GENERIC) return emptyList()
 
-        return CompanionDialogue(
-            id = selected.id,
-            text = selected.text,
+        val exact = CompanionDialogue(
+            id = supported.id,
+            text = supported.text,
             source = CompanionDialogueSource.ROUTINE,
-            priority = 300,
+            priority = 305,
             cooldownSelections = 3,
         )
+        if (context.phase != CompanionDialoguePhase.MORNING) return listOf(exact)
+
+        val variants = MorningDialogueCatalog
+            .forRoutineTrigger(supported.id)
+            .map { definition ->
+                CompanionDialogue(
+                    id = definition.id,
+                    text = definition.text,
+                    source = CompanionDialogueSource.ROUTINE,
+                    priority = 300,
+                    cooldownSelections = 3,
+                )
+            }
+        return listOf(exact) + variants
     }
 
-    private fun relationshipCandidate(
+    private fun relationshipCandidates(
         context: CompanionDialogueContext,
-    ): CompanionDialogue? {
-        if (context.phase == CompanionDialoguePhase.BEDTIME) return null
-        return when (context.relationship.familiarityStage) {
-            FamiliarityStage.NEW -> null
-            FamiliarityStage.WARMING_UP -> CompanionDialogue(
-                id = "relationship-warming",
-                text = "少しずつ、一緒の朝に慣れてきたね",
-                source = CompanionDialogueSource.RELATIONSHIP,
-                priority = 200,
-                cooldownSelections = 4,
-            )
-            FamiliarityStage.FAMILIAR -> CompanionDialogue(
-                id = "relationship-familiar",
-                text = "一緒に起きる朝も、だいぶ増えたね",
-                source = CompanionDialogueSource.RELATIONSHIP,
-                priority = 210,
-                cooldownSelections = 4,
-            )
-            FamiliarityStage.CLOSE -> CompanionDialogue(
-                id = "relationship-close",
-                text = "おはよう。今日もすぐそばにいるよ",
-                source = CompanionDialogueSource.RELATIONSHIP,
-                priority = 220,
-                cooldownSelections = 4,
-            )
-        }
+    ): List<CompanionDialogue> {
+        if (context.phase == CompanionDialoguePhase.BEDTIME) return emptyList()
+
+        return MorningDialogueCatalog
+            .forRelationship(context.relationship.familiarityStage)
+            .map { definition ->
+                CompanionDialogue(
+                    id = definition.id,
+                    text = definition.text,
+                    source = CompanionDialogueSource.RELATIONSHIP,
+                    priority = 200 + definition.minimumFamiliarity.persistedValue * 10,
+                    cooldownSelections = 4,
+                )
+            }
     }
 
     private fun bedtimeCatalogCandidates(
@@ -215,11 +246,10 @@ object CompanionDialogueSelector {
             generic("generic-bedtime-b", "そろそろ、ゆっくりしよう"),
             generic("generic-bedtime-c", "おやすみの準備、できたよ"),
         )
-        CompanionDialoguePhase.MORNING -> listOf(
-            generic("generic-morning-a", "おはよう"),
-            generic("generic-morning-b", "朝になったね"),
-            generic("generic-morning-c", "今日も一緒に起きられたね"),
-        )
+        CompanionDialoguePhase.MORNING ->
+            MorningDialogueCatalog.genericDefinitions().map { definition ->
+                generic(definition.id, definition.text)
+            }
     }
 
     private fun generic(id: String, text: String) = CompanionDialogue(
@@ -275,4 +305,6 @@ object CompanionDialogueSelector {
         NightEventType.EAR_TWITCH -> 2
         NightEventType.TURN_OVER -> 1
     }
+
+    private const val DREAM_GROUP_COOLDOWN_SELECTIONS = 8
 }
