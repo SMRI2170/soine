@@ -97,6 +97,61 @@ class RelationshipProgressionTest {
         assertEquals(13, result.state.completedSessions)
     }
 
+    @Test fun seventhCompletedSessionUnlocksFamiliarWhenTimeThresholdIsAlreadyMet() {
+        val before = RelationshipState(
+            totalCompletedSleepMillis = 24 * hour,
+            completedSessions = 6,
+            familiarity = FamiliarityStage.WARMING_UP.persistedValue,
+        )
+
+        val result = RelationshipProgression.completeSession(
+            before,
+            "night-seven",
+            durationMillis = 0L,
+        )
+
+        assertEquals(7, result.state.completedSessions)
+        assertEquals(FamiliarityStage.FAMILIAR, result.state.familiarityStage)
+        assertTrue(result.events.isEmpty())
+    }
+
+    @Test fun thirtiethCompletedSessionUnlocksCloseWhenTimeThresholdIsAlreadyMet() {
+        val before = RelationshipState(
+            totalCompletedSleepMillis = 100 * hour,
+            completedSessions = 29,
+            familiarity = FamiliarityStage.FAMILIAR.persistedValue,
+            achievedMilestoneIds = setOf(RelationshipMilestone.HOURS_100.id),
+        )
+
+        val result = RelationshipProgression.completeSession(
+            before,
+            "night-thirty",
+            durationMillis = 0L,
+        )
+
+        assertEquals(30, result.state.completedSessions)
+        assertEquals(FamiliarityStage.CLOSE, result.state.familiarityStage)
+        assertTrue(result.events.isEmpty())
+    }
+
+    @Test fun sessionCountAloneCannotBypassRequiredTimeThreshold() {
+        val before = RelationshipState(
+            totalCompletedSleepMillis = 23 * hour,
+            completedSessions = 6,
+            familiarity = FamiliarityStage.WARMING_UP.persistedValue,
+        )
+
+        val result = RelationshipProgression.completeSession(
+            before,
+            "night-seven-too-early",
+            durationMillis = 0L,
+        )
+
+        assertEquals(7, result.state.completedSessions)
+        assertEquals(FamiliarityStage.WARMING_UP, result.state.familiarityStage)
+        assertTrue(result.events.isEmpty())
+    }
+
     @Test fun storedMilestoneNeverRefiresEvenIfStateIsNearThreshold() {
         val before = RelationshipState(
             totalCompletedSleepMillis = 99 * hour,
