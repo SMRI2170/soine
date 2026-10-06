@@ -63,3 +63,22 @@ Persist seed/version or final selected events. The morning story must not change
 Morning timeline should contain at most a few interesting items. Most micro-events remain invisible and only influence pose/dialogue.
 
 The system should create "what happened last night?" curiosity, not a noisy activity log.
+
+
+## Initial content catalog
+
+The initial authored catalog contains 20 NightEvent definitions across every current NightEventType.
+
+Each definition owns presentation and generation metadata together:
+
+- stable content id and NightEventType
+- weighted selection value and minimum familiarity eligibility
+- COMMON / UNCOMMON / RARE band
+- one short observational Japanese morning line
+- semantic animation intent for later 2D/3D renderers
+- candidate-specific cooldown nights
+- payload version and content version
+
+The catalog converts definitions into WeightedNightEventCandidate values for the deterministic engine. Generated event ids keep the candidate id after the session prefix, so morning presentation can resolve the exact authored line and animation intent without guessing from event type alone.
+
+Cooldown is candidate-specific. Existing rare candidates still default to three nights, while authored uncommon events may opt into shorter cooldowns. Pool-shortage fallback remains available so cooldown does not produce a broken empty story when no alternative exists.

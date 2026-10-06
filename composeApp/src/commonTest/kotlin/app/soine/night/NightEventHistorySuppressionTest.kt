@@ -39,6 +39,24 @@ class NightEventHistorySuppressionTest {
         assertEquals(20, NightEventHistoryPolicy.primaryWeight(candidate, history))
     }
 
+    @Test fun candidateSpecificCooldownAppliesBeyondRareEvents() {
+        val candidate = WeightedNightEventCandidate(
+            id = "funny",
+            type = NightEventType.FUNNY_POSE,
+            weight = 20,
+            rarity = RarityBand.UNCOMMON,
+            cooldownNights = 2,
+        )
+        val history = NightEventHistory(
+            recentNights = listOf(
+                listOf(event("n-1:turn", NightEventType.TURN_OVER)),
+                listOf(event("n-2:funny", NightEventType.FUNNY_POSE, RarityBand.UNCOMMON)),
+            ),
+        )
+
+        assertNull(NightEventHistoryPolicy.primaryWeight(candidate, history))
+    }
+
     @Test fun poolShortageFallsBackInsteadOfReturningEmptyNight() {
         val rare = candidate("dream", NightEventType.DREAM, 1, RarityBand.RARE)
         val history = NightEventHistory(
