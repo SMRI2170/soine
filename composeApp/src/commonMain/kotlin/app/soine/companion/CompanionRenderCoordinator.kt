@@ -10,12 +10,14 @@ package app.soine.companion
 class CompanionRenderCoordinator(
     private val renderer: CompanionRenderer,
     initialStage: CompanionRelationshipStage = CompanionRelationshipStage.NEW,
+    initialReduceMotion: Boolean = false,
 ) : AutoCloseable {
     private var visible: Boolean = true
-    private var current = CompanionRenderRequest(
+    private var current = request(
         intent = CompanionIntent.IDLE,
         relationshipStage = initialStage,
-        visibility = CompanionSceneVisibility.VISIBLE,
+        reaction = null,
+        reduceMotion = initialReduceMotion,
     )
 
     val currentRequest: CompanionRenderRequest
@@ -25,12 +27,24 @@ class CompanionRenderCoordinator(
         intent: CompanionIntent,
         relationshipStage: CompanionRelationshipStage = current.relationshipStage,
         reaction: CompanionReactionTrigger? = null,
+        reduceMotion: Boolean = current.reduceMotion,
     ) {
-        current = CompanionRenderRequest(
+        current = request(
             intent = intent,
             relationshipStage = relationshipStage,
-            visibility = visibility(),
             reaction = reaction,
+            reduceMotion = reduceMotion,
+        )
+        renderer.submit(current)
+    }
+
+    fun setReduceMotion(enabled: Boolean) {
+        if (current.reduceMotion == enabled) return
+        current = request(
+            intent = current.intent,
+            relationshipStage = current.relationshipStage,
+            reaction = current.reaction,
+            reduceMotion = enabled,
         )
         renderer.submit(current)
     }
@@ -45,6 +59,23 @@ class CompanionRenderCoordinator(
     fun resync() {
         renderer.submit(current.copy(visibility = visibility()))
     }
+
+    private fun request(
+        intent: CompanionIntent,
+        relationshipStage: CompanionRelationshipStage,
+        reaction: CompanionReactionTrigger?,
+        reduceMotion: Boolean,
+    ) = CompanionRenderRequest(
+        intent = intent,
+        relationshipStage = relationshipStage,
+        visibility = visibility(),
+        reaction = reaction,
+        reduceMotion = reduceMotion,
+        sleepingPlacement = CompanionSleepingDistancePolicy.forStage(
+            relationshipStage,
+            reduceMotion,
+        ),
+    )
 
     private fun visibility(): CompanionSceneVisibility =
         if (visible) CompanionSceneVisibility.VISIBLE else CompanionSceneVisibility.HIDDEN

@@ -25,6 +25,9 @@ data class CompanionRenderRequest(
     val relationshipStage: CompanionRelationshipStage = CompanionRelationshipStage.NEW,
     val visibility: CompanionSceneVisibility = CompanionSceneVisibility.VISIBLE,
     val reaction: CompanionReactionTrigger? = null,
+    val reduceMotion: Boolean = false,
+    val sleepingPlacement: CompanionSleepingPlacement =
+        CompanionSleepingDistancePolicy.forStage(relationshipStage, reduceMotion),
 )
 
 sealed interface CompanionRendererStatus {
@@ -41,9 +44,9 @@ fun interface CompanionRendererStatusObserver {
 /**
  * Renderer-neutral boundary between shared UI/domain state and platform 3D.
  *
- * Implementations translate semantic intents into engine-specific assets and
- * animation clips. No SceneKit, Filament, OpenGL, Metal or model types cross
- * this boundary.
+ * Implementations translate semantic intents and normalized bed placement into
+ * engine-specific assets/world coordinates. No SceneKit, Filament, OpenGL,
+ * Metal or model types cross this boundary.
  */
 interface CompanionRenderer : AutoCloseable {
     val status: CompanionRendererStatus
