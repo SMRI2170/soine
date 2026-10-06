@@ -56,6 +56,9 @@ class StoredDreamDiscoveryRepository(
         val current = get()
         if (current.decisions.any { it.sessionId == decision.sessionId }) return current
 
+        require((decision.dreamId == null) == (discovery == null)) {
+            "A successful dream decision and discovery must be persisted together."
+        }
         require(discovery == null || discovery.sessionId == decision.sessionId) {
             "Dream discovery must belong to the evaluated session."
         }
@@ -158,6 +161,12 @@ internal object DreamDiscoverySnapshotCodec {
             val decision = decisionsBySession[discovery.sessionId]
             require(decision?.dreamId == discovery.dreamId) {
                 "Dream discovery has no matching persisted decision."
+            }
+        }
+        val discoveriesBySession = discoveries.associateBy { it.sessionId }
+        decisions.filter { it.dreamId != null }.forEach { decision ->
+            require(discoveriesBySession[decision.sessionId]?.dreamId == decision.dreamId) {
+                "Successful dream decision has no matching persisted discovery."
             }
         }
         return snapshot
