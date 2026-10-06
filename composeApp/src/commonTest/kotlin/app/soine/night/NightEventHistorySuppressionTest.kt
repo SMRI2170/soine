@@ -70,6 +70,44 @@ class NightEventHistorySuppressionTest {
         assertEquals(NightEventType.DREAM, generated.single().type)
     }
 
+    @Test fun algorithmVersionChangesHistorySuppressionBehavior() {
+        val rare = candidate("dream", NightEventType.DREAM, 100, RarityBand.RARE)
+        val common = candidate("turn", NightEventType.TURN_OVER, 1)
+        val session = completedSession()
+        val history = NightEventHistory(
+            recentNights = listOf(
+                listOf(event("previous:dream", NightEventType.DREAM, RarityBand.RARE)),
+            ),
+        )
+        val engine = WeightedNightEventEngine(listOf(rare, common))
+
+        val legacy = engine.generate(
+            input(
+                session = session,
+                history = history,
+                maxEvents = 1,
+                metadata = NightEventGenerationMetadata.forSession(
+                    session,
+                    algorithmVersion = 1,
+                ),
+            )
+        )
+        val current = engine.generate(
+            input(
+                session = session,
+                history = history,
+                maxEvents = 1,
+                metadata = NightEventGenerationMetadata.forSession(
+                    session,
+                    algorithmVersion = 2,
+                ),
+            )
+        )
+
+        assertEquals(NightEventType.DREAM, legacy.single().type)
+        assertEquals(NightEventType.TURN_OVER, current.single().type)
+    }
+
     @Test fun recentEventsStillActsAsOneNightHistory() {
         val candidate = candidate("turn", NightEventType.TURN_OVER, 50)
         val history = NightEventHistory(

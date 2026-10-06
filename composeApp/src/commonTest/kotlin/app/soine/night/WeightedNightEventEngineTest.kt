@@ -24,6 +24,14 @@ class WeightedNightEventEngineTest {
         assertEquals(engine.generate(input), engine.generate(input))
     }
 
+    @Test fun sameStableSeedProducesSameEventsAcrossEngineInstances() {
+        val firstEngine = engine()
+        val secondEngine = engine()
+        val sameInput = input(familiarity = 3, maxEvents = 3)
+
+        assertEquals(firstEngine.generate(sameInput), secondEngine.generate(sameInput))
+    }
+
     @Test fun relationshipGatingExcludesLockedCandidates() {
         val events = engine().generate(input(familiarity = 0, maxEvents = 5))
         assertTrue(events.none { it.type == NightEventType.DREAM })
