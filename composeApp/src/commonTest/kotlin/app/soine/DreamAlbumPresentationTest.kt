@@ -2,6 +2,7 @@ package app.soine
 
 import app.soine.dream.DreamDefinition
 import app.soine.dream.DreamDiscovery
+import app.soine.dream.InitialDreamCatalog
 import app.soine.night.RarityBand
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -10,6 +11,18 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class DreamAlbumPresentationTest {
+    @Test
+    fun initialCatalogProducesThirtyUndiscoveredAlbumSlots() {
+        val entries = buildDreamAlbumEntries(
+            definitions = InitialDreamCatalog.definitions,
+            discoveries = emptyList(),
+        )
+
+        assertEquals(30, entries.size)
+        assertTrue(entries.all { !it.discovered })
+        assertTrue(entries.all { it.title == "？？？" })
+    }
+
     @Test
     fun discoveredDreamsAreShownFirstAndUndiscoveredCopyStaysHidden() {
         val common = dream("common", "雲の夢", RarityBand.COMMON)
