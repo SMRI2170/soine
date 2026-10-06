@@ -37,8 +37,6 @@ fun App(
     onToggleAudio: () -> Unit,
     onSetTimer: (Int) -> Unit,
     onCancelTimer: () -> Unit,
-    companionIntent: CompanionIntent?,
-    quietUi: Boolean,
 ) {
     MaterialTheme {
         Surface(Modifier.fillMaxSize()) {
@@ -149,6 +147,8 @@ private fun SleepingScreen(
     onToggleAudio: () -> Unit,
     onSetTimer: (Int) -> Unit,
     onCancelTimer: () -> Unit,
+    companionIntent: CompanionIntent?,
+    quietUi: Boolean,
 ) {
     var timerDialog by remember { mutableStateOf(false) }
     val startedAt = session.startedAtEpochMillis
