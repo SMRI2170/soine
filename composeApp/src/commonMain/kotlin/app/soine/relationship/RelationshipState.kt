@@ -3,7 +3,9 @@ package app.soine.relationship
 data class RelationshipState(
     val totalCompletedSleepMillis: Long = 0,
     val completedSessions: Int = 0,
-    val familiarity: Int = 0,
+    /** Persisted enum value. Prefer [familiarityStage] in domain/UI code. */
+    val familiarity: Int = FamiliarityStage.NEW.persistedValue,
+    val familiarityRuleVersion: Int = FamiliarityPolicy.CURRENT_VERSION,
     val discoveredBehaviorIds: Set<String> = emptySet(),
     val achievedMilestoneIds: Set<String> = emptySet(),
     /** Persisted idempotency keys for sessions already applied to progression. */
@@ -14,8 +16,12 @@ data class RelationshipState(
         require(schemaVersion > 0) { "Relationship schema version must be positive." }
         require(totalCompletedSleepMillis >= 0) { "Total completed sleep time must not be negative." }
         require(completedSessions >= 0) { "Completed sessions must not be negative." }
-        require(familiarity >= 0) { "Familiarity must not be negative." }
+        require(familiarityRuleVersion > 0) { "Familiarity rule version must be positive." }
+        FamiliarityStage.fromPersistedValue(familiarity)
     }
+
+    val familiarityStage: FamiliarityStage
+        get() = FamiliarityStage.fromPersistedValue(familiarity)
 
     fun completeSession(sessionId: String, durationMillis: Long): RelationshipState {
         require(sessionId.isNotBlank()) { "Session id must not be blank." }
@@ -24,11 +30,14 @@ data class RelationshipState(
         val safeDuration = durationMillis.coerceAtLeast(0)
         val nextSessions = completedSessions + 1
         val nextTotal = totalCompletedSleepMillis + safeDuration
+        val nextStage = FamiliarityPolicy.stageFor(nextTotal, nextSessions)
         return copy(
             totalCompletedSleepMillis = nextTotal,
             completedSessions = nextSessions,
-            familiarity = familiarityFor(nextTotal, nextSessions),
+            familiarity = nextStage.persistedValue,
+            familiarityRuleVersion = FamiliarityPolicy.CURRENT_VERSION,
             processedSessionIds = processedSessionIds + sessionId,
+            schemaVersion = CURRENT_SCHEMA_VERSION,
         )
     }
 
@@ -40,16 +49,6 @@ data class RelationshipState(
         error("A session id is required for exactly-once progression.")
 
     companion object {
-        const val CURRENT_SCHEMA_VERSION: Int = 1
-    }
-}
-
-private fun familiarityFor(totalMillis: Long, sessions: Int): Int {
-    val hours = totalMillis / 3_600_000
-    return when {
-        sessions >= 30 || hours >= 300 -> 3
-        sessions >= 7 || hours >= 100 -> 2
-        sessions >= 1 -> 1
-        else -> 0
+        const val CURRENT_SCHEMA_VERSION: Int = 2
     }
 }

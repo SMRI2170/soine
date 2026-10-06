@@ -13,9 +13,9 @@ class StoredCompanionProgressRepositoryTest {
         val store = MemoryRelationshipStore()
         val repository = StoredCompanionProgressRepository(store)
         val state = RelationshipState(
-            totalCompletedSleepMillis = 12_345_678L,
-            completedSessions = 4,
-            familiarity = 1,
+            totalCompletedSleepMillis = 30L * 3_600_000L,
+            completedSessions = 8,
+            familiarity = FamiliarityStage.FAMILIAR.persistedValue,
             discoveredBehaviorIds = setOf("sleep-close", "ear-twitch"),
             achievedMilestoneIds = setOf("first-night", "100-hours"),
             processedSessionIds = setOf("night-1", "夜-2"),
@@ -29,17 +29,51 @@ class StoredCompanionProgressRepositoryTest {
     @Test fun laterSaveReplacesPreviousSnapshot() = runSuspend {
         val store = MemoryRelationshipStore()
         val repository = StoredCompanionProgressRepository(store)
-        repository.save(RelationshipState(completedSessions = 1, familiarity = 1))
+        repository.save(
+            RelationshipState(
+                completedSessions = 1,
+                familiarity = FamiliarityStage.WARMING_UP.persistedValue,
+            )
+        )
         val next = RelationshipState(
             totalCompletedSleepMillis = 3_600_000L,
             completedSessions = 2,
-            familiarity = 1,
+            familiarity = FamiliarityStage.WARMING_UP.persistedValue,
             discoveredBehaviorIds = setOf("curl-up"),
         )
 
         repository.save(next)
 
         assertEquals(next, repository.get())
+    }
+
+    @Test fun v1SnapshotMigratesToBalancedCurrentStageRules() = runSuspend {
+        val legacy = listOf(
+            "V\t1",
+            "S\t1\t360000000\t1\t2",
+            "P\t6e696768742d31",
+        ).joinToString("\n")
+        val repository = StoredCompanionProgressRepository(MemoryRelationshipStore(legacy))
+
+        val migrated = repository.get()
+
+        assertEquals(RelationshipState.CURRENT_SCHEMA_VERSION, migrated.schemaVersion)
+        assertEquals(FamiliarityPolicy.CURRENT_VERSION, migrated.familiarityRuleVersion)
+        assertEquals(FamiliarityStage.WARMING_UP, migrated.familiarityStage)
+        assertEquals(setOf("night-1"), migrated.processedSessionIds)
+    }
+
+    @Test fun currentSnapshotRecomputesStageUsingCurrentRuleVersion() = runSuspend {
+        val raw = listOf(
+            "V\t2",
+            "S\t2\t86400000\t7\t1\t1",
+        ).joinToString("\n")
+        val repository = StoredCompanionProgressRepository(MemoryRelationshipStore(raw))
+
+        val migrated = repository.get()
+
+        assertEquals(FamiliarityStage.FAMILIAR, migrated.familiarityStage)
+        assertEquals(FamiliarityPolicy.CURRENT_VERSION, migrated.familiarityRuleVersion)
     }
 
     @Test fun corruptSnapshotFailsWithoutClearingOriginalValue() = runSuspend {
