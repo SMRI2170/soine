@@ -91,6 +91,7 @@ class StoredDreamDiscoveryRepositoryTest {
                 DreamDiscovery("cloud", "night-1", 1_000L),
             )
         }
+        Unit
     }
 }
 
