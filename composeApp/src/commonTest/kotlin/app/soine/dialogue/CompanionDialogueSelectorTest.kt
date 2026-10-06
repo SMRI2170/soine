@@ -95,16 +95,21 @@ class CompanionDialogueSelectorTest {
         assertEquals(CompanionDialogueSource.GENERIC, selected.source)
     }
 
-    @Test fun cooldownSkipsRecentRelationshipLine() {
-        val selected = CompanionDialogueSelector.select(
+    @Test fun cooldownRotatesRelationshipLineWithoutRepeatingText() {
+        val first = CompanionDialogueSelector.select(
+            context(relationship = relationship(FamiliarityStage.CLOSE))
+        )
+        val second = CompanionDialogueSelector.select(
             context(
                 relationship = relationship(FamiliarityStage.CLOSE),
-                recent = listOf("relationship-close"),
+                recent = listOf(first.id),
             )
         )
 
-        assertEquals(CompanionDialogueSource.GENERIC, selected.source)
-        assertNotEquals("relationship-close", selected.id)
+        assertEquals(CompanionDialogueSource.RELATIONSHIP, first.source)
+        assertEquals(CompanionDialogueSource.RELATIONSHIP, second.source)
+        assertNotEquals(first.id, second.id)
+        assertNotEquals(first.text, second.text)
     }
 
     @Test fun recentDreamFallsThroughToNightEvent() {
@@ -138,7 +143,7 @@ class CompanionDialogueSelectorTest {
             )
         )
 
-        assertEquals("night-event-funny_pose", selected.id)
+        assertTrue(selected.id.startsWith("morning-event-funny-pose-"))
     }
 
     @Test fun deterministicTestModeReturnsSameLineForSameSeed() {
