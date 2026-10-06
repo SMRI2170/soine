@@ -5,6 +5,7 @@ import app.soine.audio.IosAmbientAudioController
 import app.soine.audio.IosAmbientAudioPreferencesStore
 import app.soine.privacy.LocalDataClearer
 import app.soine.privacy.LocalDataDeletionService
+import app.soine.relationship.IosRelationshipStateStore
 import app.soine.sleep.StoredSleepSessionRepository
 import app.soine.storage.IosSleepSessionStore
 
@@ -12,6 +13,7 @@ fun MainViewController() = ComposeUIViewController {
     val sleepStore = IosSleepSessionStore()
     val repository = StoredSleepSessionRepository(sleepStore)
     val audioPreferences = IosAmbientAudioPreferencesStore()
+    val relationshipStore = IosRelationshipStateStore()
     val audioController = IosAmbientAudioController { sound ->
         when (sound.id) {
             "rain" -> "ambient_rain.wav"
@@ -25,6 +27,7 @@ fun MainViewController() = ComposeUIViewController {
         clearers = listOf(
             LocalDataClearer { sleepStore.clear() },
             LocalDataClearer { audioPreferences.clear() },
+            LocalDataClearer { relationshipStore.clear() },
         ),
     )
     SoineApp(repository, audioPreferences, deletionService, audioController)
