@@ -87,3 +87,12 @@ DreamDiscoveryDecision stores:
 - content updates preserve dream identity
 
 Start with authored dreams. Generative dreams can be explored later only with strict tone, privacy, cost and safety controls.
+
+
+## Initial authored catalog
+
+InitialDreamCatalog ships 30 authored dreams with stable IDs. Every entry has title, shortLine, rarity, minimum familiarity, season eligibility, artKey, and contentVersion.
+
+The first set deliberately mixes ordinary and slightly magical scenes rather than making rare dreams inherently "better." All four relationship stages are represented, every season has at least two seasonal dreams, and all-year dreams remain the majority so the catalog is useful even when season is unknown.
+
+The initial catalog is bundled locally and exposed through the same DreamDefinitionRepository used by discovery. Copy avoids medical judgement, productivity coaching, guilt, streak language, and rewards for extreme sleep duration.
