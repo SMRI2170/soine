@@ -1,6 +1,8 @@
 package app.soine
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,6 +27,7 @@ fun App(
     onRetry: () -> Unit,
     onOpenDreamAlbum: () -> Unit,
     onOpenSettings: () -> Unit,
+    nightMemoryEntries: List<NightMemoryEntry> = emptyList(),
     ambientSoundLabel: String,
     defaultTimerLabel: String,
     audioPlaying: Boolean,
@@ -54,7 +57,11 @@ fun App(
                     onSetTimer = onSetTimer,
                     onCancelTimer = onCancelTimer,
                 )
-                is BedtimeDestination.Morning -> MorningSummaryScreen(destination.session.toUiSession(), onDone)
+                is BedtimeDestination.Morning -> MorningSummaryScreen(
+                    session = destination.session.toUiSession(),
+                    nightMemoryEntries = nightMemoryEntries,
+                    onDone = onDone,
+                )
                 is BedtimeDestination.Error -> Column(
                     Modifier.fillMaxSize().padding(24.dp),
                     verticalArrangement = Arrangement.Center,
@@ -227,29 +234,44 @@ private fun SleepTimerDialog(
 }
 
 @Composable
-private fun MorningSummaryScreen(session: SleepSession, onDone: () -> Unit) {
+private fun MorningSummaryScreen(
+    session: SleepSession,
+    nightMemoryEntries: List<NightMemoryEntry>,
+    onDone: () -> Unit,
+) {
     val summary = session.summary()
     Column(
         Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text("おはよう", style = MaterialTheme.typography.titleMedium)
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Spacer(Modifier.height(16.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             CompanionScene(SleepState.FINISHED)
             Spacer(Modifier.height(16.dp))
             Text("今日も一緒に起きられたね", style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(24.dp))
+            if (nightMemoryEntries.isNotEmpty()) {
+                Spacer(Modifier.height(24.dp))
+                NightMemoryTimeline(nightMemoryEntries)
+            }
+            Spacer(Modifier.height(16.dp))
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(20.dp)) {
-                    Text("昨夜の記録", fontWeight = FontWeight.SemiBold)
-                    Spacer(Modifier.height(12.dp))
-                    Text("昨夜の出来事は、これから少しずつ増えていきます")
-                    Spacer(Modifier.height(16.dp))
-                    Text("睡眠時間", style = MaterialTheme.typography.labelLarge)
-                    Text(summary?.displayDuration() ?: "記録なし", style = MaterialTheme.typography.headlineMedium)
+                    Text("睡眠時間", fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        summary?.displayDuration() ?: "記録なし",
+                        style = MaterialTheme.typography.headlineMedium,
+                    )
                 }
             }
+            Spacer(Modifier.height(16.dp))
         }
         Button(
             onClick = onDone,
