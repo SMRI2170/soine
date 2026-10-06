@@ -8,6 +8,8 @@ import app.soine.dream.DreamDiscoveryCoordinator
 import app.soine.dream.DreamDiscoveryRepository
 import app.soine.dream.InitialDreamCatalog
 import app.soine.navigation.*
+import app.soine.night.InitialNightEventCatalog
+import app.soine.night.NightEventEngineInput
 import app.soine.privacy.LocalDataDeletionResult
 import app.soine.privacy.LocalDataDeletionService
 import app.soine.relationship.CompanionProgressRepository
@@ -50,6 +52,7 @@ fun SoineApp(
     var deletingLocalData by remember { mutableStateOf(false) }
     var deletionResult by remember { mutableStateOf<LocalDataDeletionResult?>(null) }
     var dreamDiscoveries by remember { mutableStateOf<List<DreamDiscovery>>(emptyList()) }
+    var nightMemoryEntries by remember { mutableStateOf<List<NightMemoryEntry>>(emptyList()) }
     val scope = rememberCoroutineScope()
 
     DisposableEffect(ambientAudioController) {
@@ -151,6 +154,7 @@ fun SoineApp(
                                 audioCoordinator.endNight()
                                 audioPreferences = audioPreferencesStore.read()
                                 dreamDiscoveries = emptyList()
+                                nightMemoryEntries = emptyList()
                                 destination = BedtimeDestination.Bedtime
                             }
                             deletionResult = result
@@ -189,13 +193,30 @@ fun SoineApp(
                             } catch (_: Throwable) {
                                 // The completed sleep session remains valid even if dream storage fails.
                             }
+                            nightMemoryEntries = try {
+                                val relationship = companionProgressRepository.get()
+                                val events = InitialNightEventCatalog.engine.generate(
+                                    NightEventEngineInput(
+                                        session = next.session,
+                                        relationship = relationship,
+                                        maxEvents = 3,
+                                    )
+                                )
+                                buildNightMemoryEntries(events)
+                            } catch (_: Throwable) {
+                                emptyList()
+                            }
                         }
                     }
                 },
-                onDone = { destination = controller.dismissMorning() },
+                onDone = {
+                    nightMemoryEntries = emptyList()
+                    destination = controller.dismissMorning()
+                },
                 onRetry = { scope.launch { destination = controller.initialDestination() } },
                 onOpenDreamAlbum = { secondaryScreen = SecondaryScreen.DREAM_ALBUM },
                 onOpenSettings = { secondaryScreen = SecondaryScreen.SETTINGS },
+                nightMemoryEntries = nightMemoryEntries,
                 ambientSoundLabel = ambientLabel,
                 defaultTimerLabel = defaultTimerLabel,
                 audioPlaying = playbackState.status == AmbientPlaybackStatus.PLAYING,
