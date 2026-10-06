@@ -3,6 +3,8 @@ package app.soine
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import app.soine.audio.*
+import app.soine.dream.DreamDiscovery
+import app.soine.dream.InitialDreamCatalog
 import app.soine.navigation.*
 import app.soine.privacy.LocalDataDeletionResult
 import app.soine.privacy.LocalDataDeletionService
@@ -12,6 +14,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private enum class SecondaryScreen {
+    DREAM_ALBUM,
     SETTINGS,
     PRIVACY_DATA,
 }
@@ -22,6 +25,7 @@ fun SoineApp(
     audioPreferencesStore: AmbientAudioPreferencesStore,
     localDataDeletionService: LocalDataDeletionService,
     ambientAudioController: AmbientAudioController,
+    dreamDiscoveries: List<DreamDiscovery> = emptyList(),
     appVersion: String = "0.1.0",
 ) {
     val controller = remember(repository) { BedtimeFlowController(repository) }
@@ -80,9 +84,19 @@ fun SoineApp(
         val seconds = totalSeconds % 60L
         minutes.toString() + "分" + seconds.toString().padStart(2, '0') + "秒"
     }
+    val dreamAlbumEntries = remember(dreamDiscoveries) {
+        buildDreamAlbumEntries(
+            definitions = InitialDreamCatalog.definitions,
+            discoveries = dreamDiscoveries,
+        )
+    }
 
     MaterialTheme {
         when (secondaryScreen) {
+            SecondaryScreen.DREAM_ALBUM -> DreamAlbumScreen(
+                entries = dreamAlbumEntries,
+                onBack = { secondaryScreen = null },
+            )
             SecondaryScreen.SETTINGS -> SettingsScreen(
                 preferences = audioPreferences,
                 appVersion = appVersion,
@@ -149,6 +163,7 @@ fun SoineApp(
                 },
                 onDone = { destination = controller.dismissMorning() },
                 onRetry = { scope.launch { destination = controller.initialDestination() } },
+                onOpenDreamAlbum = { secondaryScreen = SecondaryScreen.DREAM_ALBUM },
                 onOpenSettings = { secondaryScreen = SecondaryScreen.SETTINGS },
                 ambientSoundLabel = ambientLabel,
                 defaultTimerLabel = defaultTimerLabel,

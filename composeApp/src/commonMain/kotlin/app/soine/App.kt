@@ -23,6 +23,7 @@ fun App(
     onWake: () -> Unit,
     onDone: () -> Unit,
     onRetry: () -> Unit,
+    onOpenDreamAlbum: () -> Unit,
     onOpenSettings: () -> Unit,
     ambientSoundLabel: String,
     defaultTimerLabel: String,
@@ -38,6 +39,7 @@ fun App(
                 BedtimeDestination.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 BedtimeDestination.Bedtime -> BedtimeScreen(
                     onStartSleep = onStartSleep,
+                    onOpenDreamAlbum = onOpenDreamAlbum,
                     onOpenSettings = onOpenSettings,
                     ambientSoundLabel = ambientSoundLabel,
                     defaultTimerLabel = defaultTimerLabel,
@@ -76,6 +78,7 @@ private fun SleepSessionRecord.toUiSession() = SleepSession(
 @Composable
 private fun BedtimeScreen(
     onStartSleep: () -> Unit,
+    onOpenDreamAlbum: () -> Unit,
     onOpenSettings: () -> Unit,
     ambientSoundLabel: String,
     defaultTimerLabel: String,
@@ -85,9 +88,16 @@ private fun BedtimeScreen(
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text("soine", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
-            TextButton(onClick = onOpenSettings) { Text("設定") }
+            Row {
+                TextButton(onClick = onOpenDreamAlbum) { Text("夢のアルバム") }
+                TextButton(onClick = onOpenSettings) { Text("設定") }
+            }
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             CompanionScene(SleepState.READY)
