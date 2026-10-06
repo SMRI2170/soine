@@ -43,18 +43,43 @@ The initial implementation is an in-memory repository intended for authored cont
 
 ## Discovery
 
+Dream discovery is evaluated once for each completed sleep session.
+
+The default discovery chance is a fixed 30% per completed session. It does not increase with session duration, so unusually long sleep is not rewarded with better odds. The deterministic roll is derived from session identity and the discovery algorithm version, not the amount of time slept.
+
+A discovery evaluation creates a DreamDiscoveryDecision whether or not a dream is found. Persisting that decision makes reopening or retrying the same session idempotent: a previous no-dream result cannot be rerolled.
+
+Before selection:
+
+1. the session must be completed
+2. the catalog applies familiarity and season gates
+3. already discovered dream IDs are removed
+4. the fixed per-session discovery roll is evaluated
+5. if successful, one remaining eligible dream is selected using authored rarity weights
+
+Current rarity weights are COMMON 70, UNCOMMON 25, RARE 5. These affect which eligible dream is selected after a successful discovery roll; they do not change the 30% per-session chance itself.
+
 DreamDiscovery stores:
 
 - dreamId
 - sessionId
 - discoveredAtEpochMillis
 
-Discovery probability and duplicate control are separate from catalog eligibility and are implemented by the discovery domain.
+DreamDiscoveryDecision stores:
+
+- sessionId
+- algorithmVersion
+- dreamId or null
+- evaluatedAtEpochMillis
 
 ## Rules
 
+- discovery is evaluated only for completed sessions
 - probability does not scale with extreme sleep duration
-- duplicates should be controlled
+- the same session cannot be rerolled after its decision is persisted
+- already discovered dreams are excluded from later draws
+- relationship and seasonal eligibility are applied before selection
+- identical session identity and algorithm version produce the same result
 - seasonal/special dreams may exist
 - collection remains optional
 - no paid random draw mechanic
