@@ -4,10 +4,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import app.soine.audio.*
 import app.soine.dream.DreamDiscovery
+import app.soine.dream.DreamDiscoveryCoordinator
+import app.soine.dream.DreamDiscoveryRepository
 import app.soine.dream.InitialDreamCatalog
 import app.soine.navigation.*
 import app.soine.privacy.LocalDataDeletionResult
 import app.soine.privacy.LocalDataDeletionService
+import app.soine.relationship.CompanionProgressRepository
 import app.soine.sleep.SleepSessionRepository
 import app.soine.sleep.currentTimeMillis
 import kotlinx.coroutines.delay
@@ -25,12 +28,19 @@ fun SoineApp(
     audioPreferencesStore: AmbientAudioPreferencesStore,
     localDataDeletionService: LocalDataDeletionService,
     ambientAudioController: AmbientAudioController,
-    dreamDiscoveries: List<DreamDiscovery> = emptyList(),
+    dreamDiscoveryRepository: DreamDiscoveryRepository,
+    companionProgressRepository: CompanionProgressRepository,
     appVersion: String = "0.1.0",
 ) {
     val controller = remember(repository) { BedtimeFlowController(repository) }
     val audioCoordinator = remember(ambientAudioController, audioPreferencesStore) {
         BedtimeAudioCoordinator(ambientAudioController, audioPreferencesStore, ::currentTimeMillis)
+    }
+    val dreamCoordinator = remember(dreamDiscoveryRepository, companionProgressRepository) {
+        DreamDiscoveryCoordinator(
+            repository = dreamDiscoveryRepository,
+            relationshipRepository = companionProgressRepository,
+        )
     }
     var destination by remember { mutableStateOf<BedtimeDestination>(BedtimeDestination.Loading) }
     var secondaryScreen by remember { mutableStateOf<SecondaryScreen?>(null) }
@@ -39,6 +49,7 @@ fun SoineApp(
     var nowEpochMillis by remember { mutableStateOf(currentTimeMillis()) }
     var deletingLocalData by remember { mutableStateOf(false) }
     var deletionResult by remember { mutableStateOf<LocalDataDeletionResult?>(null) }
+    var dreamDiscoveries by remember { mutableStateOf<List<DreamDiscovery>>(emptyList()) }
     val scope = rememberCoroutineScope()
 
     DisposableEffect(ambientAudioController) {
@@ -56,11 +67,21 @@ fun SoineApp(
         audioPreferences = next
     }
 
-    LaunchedEffect(controller) {
+    LaunchedEffect(controller, dreamCoordinator) {
         destination = controller.initialDestination()
         if (destination is BedtimeDestination.Sleeping) {
             audioCoordinator.recoverNight()
             refreshAudioPreferences()
+        }
+
+        try {
+            repository.getCompletedSessions().firstOrNull()?.let { latest ->
+                dreamCoordinator.evaluateIfNeeded(latest)
+            }
+            dreamDiscoveries = dreamCoordinator.discoveries()
+        } catch (_: Throwable) {
+            // Dream persistence is optional enrichment and must not block the sleep loop.
+            dreamDiscoveries = emptyList()
         }
     }
 
@@ -129,6 +150,7 @@ fun SoineApp(
                             if (result == LocalDataDeletionResult.Deleted) {
                                 audioCoordinator.endNight()
                                 audioPreferences = audioPreferencesStore.read()
+                                dreamDiscoveries = emptyList()
                                 destination = BedtimeDestination.Bedtime
                             }
                             deletionResult = result
@@ -158,7 +180,16 @@ fun SoineApp(
                     scope.launch {
                         audioCoordinator.endNight()
                         refreshAudioPreferences()
-                        destination = controller.finish()
+                        val next = controller.finish()
+                        destination = next
+                        if (next is BedtimeDestination.Morning) {
+                            try {
+                                dreamCoordinator.evaluateIfNeeded(next.session)
+                                dreamDiscoveries = dreamCoordinator.discoveries()
+                            } catch (_: Throwable) {
+                                // The completed sleep session remains valid even if dream storage fails.
+                            }
+                        }
                     }
                 },
                 onDone = { destination = controller.dismissMorning() },
