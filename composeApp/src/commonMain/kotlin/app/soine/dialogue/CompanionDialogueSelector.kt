@@ -78,6 +78,7 @@ object CompanionDialogueSelector {
     private fun dreamCandidate(context: CompanionDialogueContext): CompanionDialogue? {
         if (context.phase != CompanionDialoguePhase.MORNING) return null
         val dream = context.discoveredDream ?: return null
+        if (dream.id.isBlank() || dream.shortLine.isBlank()) return null
         return CompanionDialogue(
             id = "dream-" + dream.id,
             text = dream.shortLine,
@@ -117,6 +118,11 @@ object CompanionDialogueSelector {
     private fun routineCandidate(context: CompanionDialogueContext): CompanionDialogue? {
         val profile = context.routineProfile ?: return null
         val routineContext = context.routineContext ?: return null
+        val expectedPhase = when (context.phase) {
+            CompanionDialoguePhase.BEDTIME -> RoutineDialoguePhase.BEDTIME
+            CompanionDialoguePhase.MORNING -> RoutineDialoguePhase.MORNING
+        }
+        if (routineContext.phase != expectedPhase) return null
 
         val selected = RoutineDialogueSelector.select(
             profile = profile,
