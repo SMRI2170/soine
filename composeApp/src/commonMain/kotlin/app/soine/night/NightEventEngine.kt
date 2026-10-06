@@ -6,7 +6,13 @@ import app.soine.sleep.SleepSessionStatus
 
 data class NightEventHistory(
     val recentEvents: List<NightEvent> = emptyList(),
-)
+    val recentNights: List<List<NightEvent>> = emptyList(),
+) {
+    fun nightsNewestFirst(): List<List<NightEvent>> =
+        if (recentNights.isNotEmpty()) recentNights
+        else if (recentEvents.isNotEmpty()) listOf(recentEvents)
+        else emptyList()
+}
 
 data class NightEventSignals(
     val soundReactionCount: Int? = null,
@@ -27,6 +33,7 @@ data class NightEventEngineInput(
     val relationship: RelationshipState,
     val history: NightEventHistory = NightEventHistory(),
     val signals: NightEventSignals = NightEventSignals(),
+    val generationMetadata: NightEventGenerationMetadata? = null,
     val maxEvents: Int = DEFAULT_MAX_EVENTS,
 ) {
     init {
