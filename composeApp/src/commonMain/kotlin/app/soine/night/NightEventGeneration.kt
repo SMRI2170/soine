@@ -21,7 +21,7 @@ data class NightEventGenerationMetadata(
     }
 
     companion object {
-        const val CURRENT_ALGORITHM_VERSION: Int = 1
+        const val CURRENT_ALGORITHM_VERSION: Int = 2
 
         fun forSession(
             session: SleepSessionRecord,
