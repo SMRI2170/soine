@@ -1,6 +1,8 @@
 package app.soine
 
 import androidx.compose.material3.MaterialTheme
+import app.soine.accessibility.AccessibilityPreferences
+import app.soine.accessibility.DefaultAccessibilityPreferences
 import androidx.compose.runtime.*
 import app.soine.audio.*
 import app.soine.dream.DreamDiscovery
@@ -32,6 +34,7 @@ fun SoineApp(
     ambientAudioController: AmbientAudioController,
     dreamDiscoveryRepository: DreamDiscoveryRepository,
     companionProgressRepository: CompanionProgressRepository,
+    accessibilityPreferences: AccessibilityPreferences = DefaultAccessibilityPreferences,
     appVersion: String = "0.1.0",
 ) {
     val controller = remember(repository) { BedtimeFlowController(repository) }
@@ -102,6 +105,7 @@ fun SoineApp(
     val remainingMillis = audioPreferences.timerStopAtEpochMillis?.let {
         (it - nowEpochMillis).coerceAtLeast(0L)
     }
+    val reduceMotion = accessibilityPreferences.reduceMotionEnabled()
     val remainingLabel = remainingMillis?.let {
         val totalSeconds = (it + 999L) / 1_000L
         val minutes = totalSeconds / 60L
@@ -217,6 +221,7 @@ fun SoineApp(
                 onOpenDreamAlbum = { secondaryScreen = SecondaryScreen.DREAM_ALBUM },
                 onOpenSettings = { secondaryScreen = SecondaryScreen.SETTINGS },
                 nightMemoryEntries = nightMemoryEntries,
+                reduceMotion = reduceMotion,
                 ambientSoundLabel = ambientLabel,
                 defaultTimerLabel = defaultTimerLabel,
                 audioPlaying = playbackState.status == AmbientPlaybackStatus.PLAYING,
