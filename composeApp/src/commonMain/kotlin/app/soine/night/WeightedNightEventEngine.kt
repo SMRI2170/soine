@@ -6,6 +6,7 @@ data class WeightedNightEventCandidate(
     val weight: Int,
     val rarity: RarityBand = RarityBand.COMMON,
     val minimumFamiliarity: Int = 0,
+    val cooldownNights: Int = if (rarity == RarityBand.RARE) 3 else 0,
     val payloadVersion: Int = 1,
 ) {
     init {
@@ -13,6 +14,7 @@ data class WeightedNightEventCandidate(
         require(':' !in id) { "Candidate id must not contain ':'." }
         require(weight > 0) { "Candidate weight must be positive." }
         require(minimumFamiliarity >= 0) { "Minimum familiarity must not be negative." }
+        require(cooldownNights >= 0) { "Cooldown nights must not be negative." }
         require(payloadVersion > 0) { "Payload version must be positive." }
     }
 }
@@ -145,9 +147,9 @@ internal object NightEventHistoryPolicy {
     fun primaryWeight(candidate: WeightedNightEventCandidate, history: NightEventHistory): Int? {
         val nights = history.nightsNewestFirst()
         val key = candidate.id
-        val rareOnCooldown = candidate.rarity == RarityBand.RARE &&
-            nights.take(RARE_COOLDOWN_NIGHTS).flatten().any { eventCandidateId(it) == key }
-        if (rareOnCooldown) return null
+        val onCooldown = candidate.cooldownNights > 0 &&
+            nights.take(candidate.cooldownNights).flatten().any { eventCandidateId(it) == key }
+        if (onCooldown) return null
 
         val repeatedLastNight = nights.firstOrNull().orEmpty().any { eventCandidateId(it) == key }
         return if (repeatedLastNight) maxOf(1, candidate.weight / PREVIOUS_NIGHT_WEIGHT_DIVISOR)
