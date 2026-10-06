@@ -31,17 +31,18 @@ class RelationshipStateStorageCorruptedException(
 )
 
 internal object RelationshipStateCodec {
-    private const val SNAPSHOT_VERSION = 1
+    private const val SNAPSHOT_VERSION = 2
 
     fun encode(state: RelationshipState): String = buildList {
         add("V\t" + SNAPSHOT_VERSION)
         add(
             listOf(
                 "S",
-                state.schemaVersion.toString(),
+                RelationshipState.CURRENT_SCHEMA_VERSION.toString(),
                 state.totalCompletedSleepMillis.toString(),
                 state.completedSessions.toString(),
                 state.familiarity.toString(),
+                FamiliarityPolicy.CURRENT_VERSION.toString(),
             ).joinToString("\t")
         )
         state.discoveredBehaviorIds.sorted().forEach { add("B\t" + encodeUtf8Hex(it)) }
@@ -55,10 +56,59 @@ internal object RelationshipStateCodec {
 
         val version = lines.first().split('\t')
         require(version.size == 2 && version[0] == "V") { "Missing relationship snapshot version." }
-        require(version[1].toInt() == SNAPSHOT_VERSION) {
-            "Unsupported relationship snapshot version: " + version[1]
+        return when (version[1].toInt()) {
+            1 -> decodeV1(lines)
+            SNAPSHOT_VERSION -> decodeV2(lines)
+            else -> error("Unsupported relationship snapshot version: " + version[1])
+        }
+    }
+
+    private fun decodeV1(lines: List<String>): RelationshipState {
+        val decoded = decodeRows(lines, expectedStateFields = 5)
+        val header = decoded.header
+        val totalMillis = header[2].toLong()
+        val sessions = header[3].toInt()
+        val migratedStage = FamiliarityPolicy.stageFor(totalMillis, sessions)
+
+        return RelationshipState(
+            schemaVersion = RelationshipState.CURRENT_SCHEMA_VERSION,
+            totalCompletedSleepMillis = totalMillis,
+            completedSessions = sessions,
+            familiarity = migratedStage.persistedValue,
+            familiarityRuleVersion = FamiliarityPolicy.CURRENT_VERSION,
+            discoveredBehaviorIds = decoded.behaviors,
+            processedSessionIds = decoded.processed,
+            achievedMilestoneIds = decoded.milestones,
+        )
+    }
+
+    private fun decodeV2(lines: List<String>): RelationshipState {
+        val decoded = decodeRows(lines, expectedStateFields = 6)
+        val header = decoded.header
+        val totalMillis = header[2].toLong()
+        val sessions = header[3].toInt()
+        val storedRuleVersion = header[5].toInt()
+        require(storedRuleVersion <= FamiliarityPolicy.CURRENT_VERSION) {
+            "Unsupported future familiarity rule version: " + storedRuleVersion
         }
 
+        val canonicalStage = FamiliarityPolicy.stageFor(totalMillis, sessions)
+        return RelationshipState(
+            schemaVersion = RelationshipState.CURRENT_SCHEMA_VERSION,
+            totalCompletedSleepMillis = totalMillis,
+            completedSessions = sessions,
+            familiarity = canonicalStage.persistedValue,
+            familiarityRuleVersion = FamiliarityPolicy.CURRENT_VERSION,
+            discoveredBehaviorIds = decoded.behaviors,
+            processedSessionIds = decoded.processed,
+            achievedMilestoneIds = decoded.milestones,
+        )
+    }
+
+    private fun decodeRows(
+        lines: List<String>,
+        expectedStateFields: Int,
+    ): DecodedRows {
         var stateHeader: List<String>? = null
         val behaviors = linkedSetOf<String>()
         val processed = linkedSetOf<String>()
@@ -69,7 +119,7 @@ internal object RelationshipStateCodec {
             when (fields.firstOrNull()) {
                 "S" -> {
                     require(stateHeader == null) { "Duplicate relationship state row." }
-                    require(fields.size == 5) { "Malformed relationship state row." }
+                    require(fields.size == expectedStateFields) { "Malformed relationship state row." }
                     stateHeader = fields
                 }
                 "B" -> {
@@ -88,17 +138,20 @@ internal object RelationshipStateCodec {
             }
         }
 
-        val header = requireNotNull(stateHeader) { "Missing relationship state row." }
-        return RelationshipState(
-            schemaVersion = header[1].toInt(),
-            totalCompletedSleepMillis = header[2].toLong(),
-            completedSessions = header[3].toInt(),
-            familiarity = header[4].toInt(),
-            discoveredBehaviorIds = behaviors,
-            processedSessionIds = processed,
-            achievedMilestoneIds = milestones,
+        return DecodedRows(
+            header = requireNotNull(stateHeader) { "Missing relationship state row." },
+            behaviors = behaviors,
+            processed = processed,
+            milestones = milestones,
         )
     }
+
+    private data class DecodedRows(
+        val header: List<String>,
+        val behaviors: Set<String>,
+        val processed: Set<String>,
+        val milestones: Set<String>,
+    )
 
     private fun encodeUtf8Hex(value: String): String =
         value.encodeToByteArray().joinToString(separator = "") { byte ->
