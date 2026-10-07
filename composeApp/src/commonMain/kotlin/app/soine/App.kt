@@ -8,10 +8,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import app.soine.accessibility.AccessibilityPolicy
 import app.soine.navigation.BedtimeDestination
 import app.soine.companion.CompanionIntent
+import app.soine.companion.CompanionRenderRequest
 import app.soine.companion.CompanionStaticFallback
 import app.soine.sleep.SleepSession
 import app.soine.sleep.SleepSessionRecord
@@ -28,6 +32,9 @@ fun App(
     onOpenDreamAlbum: () -> Unit,
     onOpenSettings: () -> Unit,
     nightMemoryEntries: List<NightMemoryEntry> = emptyList(),
+    sleepingCompanionIntent: CompanionIntent? = null,
+    quietSleepUi: Boolean = false,
+    reduceMotion: Boolean = false,
     ambientSoundLabel: String,
     defaultTimerLabel: String,
     audioPlaying: Boolean,
@@ -46,6 +53,7 @@ fun App(
                     onOpenSettings = onOpenSettings,
                     ambientSoundLabel = ambientSoundLabel,
                     defaultTimerLabel = defaultTimerLabel,
+                    reduceMotion = reduceMotion,
                 )
                 is BedtimeDestination.Sleeping -> SleepingScreen(
                     session = destination.session.toUiSession(),
@@ -56,10 +64,14 @@ fun App(
                     onToggleAudio = onToggleAudio,
                     onSetTimer = onSetTimer,
                     onCancelTimer = onCancelTimer,
+                    reduceMotion = reduceMotion,
+                    companionIntent = sleepingCompanionIntent,
+                    quietUi = quietSleepUi,
                 )
                 is BedtimeDestination.Morning -> MorningSummaryScreen(
                     session = destination.session.toUiSession(),
                     nightMemoryEntries = nightMemoryEntries,
+                    reduceMotion = reduceMotion,
                     onDone = onDone,
                 )
                 is BedtimeDestination.Error -> Column(
@@ -89,31 +101,43 @@ private fun BedtimeScreen(
     onOpenSettings: () -> Unit,
     ambientSoundLabel: String,
     defaultTimerLabel: String,
+    reduceMotion: Boolean,
 ) {
     Column(
         Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("soine", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
-            Row {
-                TextButton(onClick = onOpenDreamAlbum) { Text("夢のアルバム") }
-                TextButton(onClick = onOpenSettings) { Text("設定") }
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("soine", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
+                Row {
+                    TextButton(
+                        onClick = onOpenDreamAlbum,
+                        modifier = Modifier.heightIn(min = AccessibilityPolicy.MIN_TOUCH_TARGET_DP.dp),
+                    ) { Text("夢のアルバム") }
+                    TextButton(
+                        onClick = onOpenSettings,
+                        modifier = Modifier.heightIn(min = AccessibilityPolicy.MIN_TOUCH_TARGET_DP.dp),
+                    ) { Text("設定") }
+                }
             }
-        }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            CompanionScene(SleepState.READY)
+            Spacer(Modifier.height(28.dp))
+            CompanionScene(SleepState.READY, reduceMotion)
             Spacer(Modifier.height(20.dp))
             Text("今日も一緒に眠ろう", style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(8.dp))
             Text("音や計測を設定しなくても、そのまま始められます")
-        }
-        Column(Modifier.fillMaxWidth()) {
+            Spacer(Modifier.height(24.dp))
             OutlinedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
                     Text("環境音", fontWeight = FontWeight.Medium)
@@ -124,12 +148,15 @@ private fun BedtimeScreen(
                 }
             }
             Spacer(Modifier.height(16.dp))
-            Button(
-                onClick = onStartSleep,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape = RoundedCornerShape(18.dp),
-            ) { Text("一緒に寝る") }
         }
+        Button(
+            onClick = onStartSleep,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 56.dp)
+                .semantics { contentDescription = "睡眠を開始する" },
+            shape = RoundedCornerShape(18.dp),
+        ) { Text("一緒に寝る") }
     }
 }
 
@@ -143,46 +170,72 @@ private fun SleepingScreen(
     onToggleAudio: () -> Unit,
     onSetTimer: (Int) -> Unit,
     onCancelTimer: () -> Unit,
+    reduceMotion: Boolean,
+    companionIntent: CompanionIntent?,
+    quietUi: Boolean,
 ) {
     var timerDialog by remember { mutableStateOf(false) }
     val startedAt = session.startedAtEpochMillis
     Column(
         Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("おやすみ", style = MaterialTheme.typography.titleMedium)
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            CompanionScene(SleepState.SLEEPING)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text("おやすみ", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(24.dp))
+            CompanionScene(
+                state = SleepState.SLEEPING,
+                reduceMotion = reduceMotion,
+                intentOverride = companionIntent,
+            )
             Spacer(Modifier.height(20.dp))
             Text("一緒に眠っています", style = MaterialTheme.typography.headlineSmall)
-            if (startedAt != null) {
-                Spacer(Modifier.height(8.dp))
-                Text("開始済み", style = MaterialTheme.typography.bodyMedium)
+            if (!quietUi) {
+                if (startedAt != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Text("開始済み", style = MaterialTheme.typography.bodyMedium)
+                }
+                Spacer(Modifier.height(16.dp))
+                Text("環境音: " + ambientSoundLabel)
+                remainingTimerLabel?.let { Text("タイマー: " + it) }
             }
-            Spacer(Modifier.height(16.dp))
-            Text("環境音: " + ambientSoundLabel)
-            remainingTimerLabel?.let { Text("タイマー: " + it) }
-        }
-        Column(Modifier.fillMaxWidth()) {
-            TextButton(onClick = onToggleAudio, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+            Spacer(Modifier.height(12.dp))
+            TextButton(
+                onClick = onToggleAudio,
+                modifier = Modifier.heightIn(min = AccessibilityPolicy.MIN_TOUCH_TARGET_DP.dp),
+            ) {
                 Text(if (audioPlaying) "環境音を一時停止" else "環境音を再生")
             }
-            TextButton(onClick = { timerDialog = true }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+            TextButton(
+                onClick = { timerDialog = true },
+                modifier = Modifier.heightIn(min = AccessibilityPolicy.MIN_TOUCH_TARGET_DP.dp),
+            ) {
                 Text("スリープタイマーを変更")
             }
             if (remainingTimerLabel != null) {
-                TextButton(onClick = onCancelTimer, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                TextButton(
+                    onClick = onCancelTimer,
+                    modifier = Modifier.heightIn(min = AccessibilityPolicy.MIN_TOUCH_TARGET_DP.dp),
+                ) {
                     Text("タイマーを解除")
                 }
             }
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(
-                onClick = onWake,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape = RoundedCornerShape(18.dp),
-            ) { Text("起きる") }
+            Spacer(Modifier.height(16.dp))
         }
+        OutlinedButton(
+            onClick = onWake,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 56.dp)
+                .semantics { contentDescription = "起床して朝の記録を見る" },
+            shape = RoundedCornerShape(18.dp),
+        ) { Text("起きる") }
     }
 
     if (timerDialog) {
@@ -208,9 +261,14 @@ private fun SleepTimerDialog(
         title = { Text("スリープタイマー") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(30, 60, 90).forEach { minutes ->
-                        OutlinedButton(onClick = { onSetTimer(minutes) }) {
+                        OutlinedButton(
+                            onClick = { onSetTimer(minutes) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = AccessibilityPolicy.MIN_TOUCH_TARGET_DP.dp),
+                        ) {
                             Text(minutes.toString() + "分")
                         }
                     }
@@ -237,6 +295,7 @@ private fun SleepTimerDialog(
 private fun MorningSummaryScreen(
     session: SleepSession,
     nightMemoryEntries: List<NightMemoryEntry>,
+    reduceMotion: Boolean,
     onDone: () -> Unit,
 ) {
     val summary = session.summary()
@@ -253,7 +312,7 @@ private fun MorningSummaryScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            CompanionScene(SleepState.FINISHED)
+            CompanionScene(SleepState.FINISHED, reduceMotion)
             Spacer(Modifier.height(16.dp))
             Text("今日も一緒に起きられたね", style = MaterialTheme.typography.headlineSmall)
             if (nightMemoryEntries.isNotEmpty()) {
@@ -275,22 +334,37 @@ private fun MorningSummaryScreen(
         }
         Button(
             onClick = onDone,
-            modifier = Modifier.fillMaxWidth().height(56.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 56.dp)
+                .semantics { contentDescription = "朝の記録を閉じて今日を始める" },
             shape = RoundedCornerShape(18.dp),
         ) { Text("今日をはじめる") }
     }
 }
 
 @Composable
-private fun CompanionScene(state: SleepState) {
-    val intent = when (state) {
+private fun CompanionScene(
+    state: SleepState,
+    reduceMotion: Boolean,
+    intentOverride: CompanionIntent? = null,
+) {
+    val intent = intentOverride ?: when (state) {
         SleepState.SLEEPING -> CompanionIntent.SLEEP
         SleepState.FINISHED -> CompanionIntent.WAKE
         SleepState.READY -> CompanionIntent.IDLE
     }
-    val artwork = CompanionStaticFallback.forIntent(intent)
+    val presentation = CompanionStaticFallback.forRequest(
+        CompanionRenderRequest(
+            intent = intent,
+            reduceMotion = reduceMotion,
+        )
+    )
+    val artwork = presentation.artwork
     Surface(
-        modifier = Modifier.size(width = 190.dp, height = 150.dp),
+        modifier = Modifier
+            .size(width = 190.dp, height = 150.dp)
+            .semantics { contentDescription = artwork.contentDescription },
         shape = RoundedCornerShape(64.dp),
         tonalElevation = 2.dp,
     ) {
