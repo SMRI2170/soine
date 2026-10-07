@@ -23,6 +23,9 @@ Start here when implementing Soine.
 - dream-system.md — collectible dreams
 - 3d-plan.md — renderer PoC
 - privacy.md — permissions/data handling
+- microphone-permission-ux.md — opt-in microphone permission flow
+- health-data-contract.md — normalized Health sleep-data boundary
+- accessibility.md — core-flow accessibility and reduce-motion baseline
 - sound-event-model.md — derived overnight sound-event contract
 - analytics-plan.md — validation metrics
 - testing-strategy.md — release quality
