@@ -34,6 +34,12 @@ This is intentionally small for the MVP. A database becomes preferable once quer
 - confidence?
 - schemaVersion
 
+### Health enrichment policy
+
+The persisted/manual session remains authoritative. Health-derived estimates
+are modeled separately and must not overwrite the canonical session interval.
+See `health-merge-policy.md`.
+
 ## CompanionProgress
 
 - totalCompletedSleepMillis
