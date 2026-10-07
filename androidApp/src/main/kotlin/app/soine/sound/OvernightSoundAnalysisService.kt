@@ -41,7 +41,16 @@ class OvernightSoundAnalysisService : Service() {
                 return START_NOT_STICKY
             }
 
-        startMicrophoneForeground()
+        // Foreground promotion can fail after startForegroundService() returned
+        // successfully (background restriction / permission race). This analysis
+        // is optional, so fail closed without crashing the app process.
+        val promoted = runCatching { startMicrophoneForeground() }.isSuccess
+        if (!promoted) {
+            AndroidOvernightSoundRuntime.cancel(sessionId)
+            stopSelf(startId)
+            return START_NOT_STICKY
+        }
+
         if (captureThread?.isAlive != true) {
             startCapture(sessionId)
         }
@@ -80,6 +89,7 @@ class OvernightSoundAnalysisService : Service() {
             AudioFormat.ENCODING_PCM_16BIT,
         )
         if (minBufferSize <= 0) {
+            AndroidOvernightSoundRuntime.cancel(sessionId)
             running = false
             stopSelf()
             return
@@ -94,6 +104,7 @@ class OvernightSoundAnalysisService : Service() {
                 maxOf(minBufferSize, FRAME_SAMPLES * PCM_BYTES_PER_SAMPLE),
             )
         } catch (_: Throwable) {
+            AndroidOvernightSoundRuntime.cancel(sessionId)
             running = false
             stopSelf()
             return
@@ -101,6 +112,7 @@ class OvernightSoundAnalysisService : Service() {
 
         if (record.state != AudioRecord.STATE_INITIALIZED) {
             record.release()
+            AndroidOvernightSoundRuntime.cancel(sessionId)
             running = false
             stopSelf()
             return
