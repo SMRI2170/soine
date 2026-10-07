@@ -265,14 +265,19 @@ fun PrivacyDataScreen(
                     style = MaterialTheme.typography.bodySmall,
                 )
             } else {
-                soundEventSessions.forEachIndexed { index, summary ->
+                soundEventSessions.forEach { summary ->
                     Row(
                         Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Column(Modifier.weight(1f)) {
-                            Text("睡眠記録 " + (index + 1))
+                            Text(
+                                "最終イベント " +
+                                    formatJapaneseDiscoveryDate(summary.latestOccurredAtEpochMillis) +
+                                    " " +
+                                    formatJapaneseNightEventTime(summary.latestOccurredAtEpochMillis),
+                            )
                             Text(
                                 summary.eventCount.toString() + "件の音イベント",
                                 style = MaterialTheme.typography.bodySmall,
@@ -286,14 +291,16 @@ fun PrivacyDataScreen(
                         }
                     }
                 }
+            }
 
-                OutlinedButton(
-                    onClick = { confirmDeleteAllSoundEvents = true },
-                    enabled = !deletingSoundEvents,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(if (deletingSoundEvents) "削除中" else "音イベントをすべて削除")
-                }
+            // Keep this action visible even when the snapshot cannot be decoded:
+            // explicit privacy deletion must still be able to clear unreadable data.
+            OutlinedButton(
+                onClick = { confirmDeleteAllSoundEvents = true },
+                enabled = !deletingSoundEvents,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(if (deletingSoundEvents) "削除中" else "音イベントをすべて削除")
             }
 
             soundDeletionMessage?.let { message ->

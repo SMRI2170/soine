@@ -47,6 +47,16 @@ class SoundEventRepositoryTest {
     }
 
     @Test
+    fun deleteAllClearsCorruptSnapshot() = runSoundTest {
+        val store = FakeSoundEventStore("broken")
+        val repository = StoredSoundEventRepository(store)
+
+        assertEquals(null, repository.deleteAll())
+        assertEquals(null, store.value)
+        assertTrue(repository.getAll().isEmpty())
+    }
+
+    @Test
     fun codecRoundTripsWithoutRawAudioFields() {
         val original = listOf(
             StoredSoundEvent(

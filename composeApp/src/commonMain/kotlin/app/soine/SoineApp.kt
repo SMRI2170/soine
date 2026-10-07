@@ -262,8 +262,14 @@ fun SoineApp(
                             val result = runCatching { soundEventRepository.deleteAll() }
                             soundDeletionMessage = result.fold(
                                 onSuccess = { count ->
-                                    if (count > 0) count.toString() + "件の音イベントをすべて削除しました。"
-                                    else "保存された音イベントはありませんでした。"
+                                    when {
+                                        count == null ->
+                                            "保存されていた音イベントデータを削除しました。"
+                                        count > 0 ->
+                                            count.toString() + "件の音イベントをすべて削除しました。"
+                                        else ->
+                                            "保存された音イベントはありませんでした。"
+                                    }
                                 },
                                 onFailure = {
                                     "音イベントを削除できませんでした。もう一度お試しください。"
@@ -282,12 +288,17 @@ fun SoineApp(
                         scope.launch {
                             deletingLocalData = true
                             val result = localDataDeletionService.deleteAll()
+                            // Deletion continues across all local stores even when a later
+                            // clearer fails. Always reload this store so the UI reflects
+                            // what was actually removed rather than the aggregate result.
+                            soundEventSessions = runCatching {
+                                soundEventRepository.getAll().sessionSummaries()
+                            }.getOrDefault(emptyList())
                             if (result == LocalDataDeletionResult.Deleted) {
                                 audioCoordinator.endNight()
                                 audioPreferences = audioPreferencesStore.read()
                                 soundAnalysisPreferences = soundAnalysisPreferencesStore.read()
                                 pendingSoundAnalysisEnable = false
-                                soundEventSessions = emptyList()
                                 soundDeletionMessage = null
                                 dreamDiscoveries = emptyList()
                                 nightMemoryEntries = emptyList()
