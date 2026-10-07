@@ -12,6 +12,7 @@ import app.soine.relationship.IosRelationshipStateStore
 import app.soine.relationship.StoredCompanionProgressRepository
 import app.soine.sleep.StoredSleepSessionRepository
 import app.soine.sound.IosMicrophonePermissionController
+import app.soine.sound.IosOvernightSoundAnalysisController
 import app.soine.sound.IosSoundAnalysisPreferencesStore
 import app.soine.sound.IosSoundEventStore
 import app.soine.sound.StoredSoundEventRepository
@@ -30,6 +31,7 @@ fun MainViewController() = ComposeUIViewController {
     val dreamDiscoveryRepository = StoredDreamDiscoveryRepository(dreamStore)
     val accessibilityPreferences = IosAccessibilityPreferences()
     val microphonePermissionController = IosMicrophonePermissionController()
+    val overnightSoundAnalysisController = IosOvernightSoundAnalysisController()
     val audioController = IosAmbientAudioController { sound ->
         when (sound.id) {
             "rain" -> "ambient_rain.wav"
@@ -60,5 +62,6 @@ fun MainViewController() = ComposeUIViewController {
         microphonePermissionController = microphonePermissionController,
         soundAnalysisPreferencesStore = soundAnalysisPreferences,
         soundEventRepository = soundEventRepository,
+        overnightSoundAnalysisController = overnightSoundAnalysisController,
     )
 }
