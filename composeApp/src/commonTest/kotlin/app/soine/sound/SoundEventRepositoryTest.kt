@@ -51,7 +51,7 @@ class SoundEventRepositoryTest {
         val store = FakeSoundEventStore("broken")
         val repository = StoredSoundEventRepository(store)
 
-        assertEquals(0, repository.deleteAll())
+        assertEquals(null, repository.deleteAll())
         assertEquals(null, store.value)
         assertTrue(repository.getAll().isEmpty())
     }
