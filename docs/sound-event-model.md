@@ -29,3 +29,26 @@ audio payload. Platform detection spikes (#55 / #56) must convert microphone
 input into derived `SoundEvent` values before data enters common domain logic.
 
 Raw audio remains non-persistent by default.
+
+
+## Local persistence and deletion
+
+Derived sound events are stored locally in a versioned snapshot grouped by the
+Soine sleep-session id. The snapshot contains only:
+
+- session id
+- derived event type
+- occurrence timestamp
+- normalized confidence
+- on-device source
+- detector/model version
+
+It contains no raw-audio path, recording identifier, or audio payload.
+
+The privacy screen allows the user to delete all derived events for one sleep
+session or delete every stored derived event. Both actions require explicit
+confirmation and provide result feedback. Deleting derived sound events does
+not delete the underlying sleep session.
+
+"Soineのすべてのローカルデータを削除" also clears the derived sound-event
+store.

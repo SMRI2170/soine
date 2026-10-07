@@ -1,6 +1,8 @@
 package app.soine
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,6 +17,7 @@ import app.soine.sound.MicrophoneEnableAction
 import app.soine.sound.MicrophonePermissionCopy
 import app.soine.sound.MicrophonePermissionState
 import app.soine.sound.microphoneEnableAction
+import app.soine.sound.SoundEventSessionSummary
 
 @Composable
 fun SettingsScreen(
@@ -225,14 +228,25 @@ fun SettingsScreen(
 fun PrivacyDataScreen(
     deleting: Boolean,
     deletionResult: LocalDataDeletionResult?,
+    soundEventSessions: List<SoundEventSessionSummary>,
+    deletingSoundEvents: Boolean,
+    soundDeletionMessage: String?,
+    onDeleteSoundSession: (String) -> Unit,
+    onDeleteAllSoundEvents: () -> Unit,
+    onDismissSoundDeletionMessage: () -> Unit,
     onDeleteAll: () -> Unit,
     onDismissDeletionResult: () -> Unit,
     onBack: () -> Unit,
 ) {
     var confirmDeletion by remember { mutableStateOf(false) }
+    var soundSessionPendingDelete by remember { mutableStateOf<String?>(null) }
+    var confirmDeleteAllSoundEvents by remember { mutableStateOf(false) }
 
     Column(
-        Modifier.fillMaxSize().padding(24.dp),
+        Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Header("プライバシーとデータ", onBack)
@@ -243,7 +257,51 @@ fun PrivacyDataScreen(
         }
 
         SettingSection("音") {
-            Text("夜間の音解析は任意機能です。標準ではオフで、raw audioを保存しない設計です。")
+            Text("夜間の音解析は任意機能です。標準ではオフで、raw audioは保存しません。保存するのは端末内で判定した音イベントだけです。")
+
+            if (soundEventSessions.isEmpty()) {
+                Text(
+                    "保存された音イベントはありません。",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            } else {
+                soundEventSessions.forEachIndexed { index, summary ->
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text("睡眠記録 " + (index + 1))
+                            Text(
+                                summary.eventCount.toString() + "件の音イベント",
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                        TextButton(
+                            enabled = !deletingSoundEvents,
+                            onClick = { soundSessionPendingDelete = summary.sessionId },
+                        ) {
+                            Text("削除")
+                        }
+                    }
+                }
+
+                OutlinedButton(
+                    onClick = { confirmDeleteAllSoundEvents = true },
+                    enabled = !deletingSoundEvents,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(if (deletingSoundEvents) "削除中" else "音イベントをすべて削除")
+                }
+            }
+
+            soundDeletionMessage?.let { message ->
+                Text(message, style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = onDismissSoundDeletionMessage) {
+                    Text("閉じる")
+                }
+            }
         }
 
         SettingSection("Health") {
@@ -279,6 +337,50 @@ fun PrivacyDataScreen(
                 null -> Unit
             }
         }
+    }
+
+    soundSessionPendingDelete?.let { sessionId ->
+        AlertDialog(
+            onDismissRequest = { soundSessionPendingDelete = null },
+            title = { Text("この睡眠の音イベントを削除しますか？") },
+            text = { Text("この睡眠で検出された音イベントだけを端末から削除します。raw audioは保存していません。") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        soundSessionPendingDelete = null
+                        onDismissSoundDeletionMessage()
+                        onDeleteSoundSession(sessionId)
+                    },
+                ) { Text("削除する") }
+            },
+            dismissButton = {
+                TextButton(onClick = { soundSessionPendingDelete = null }) {
+                    Text("キャンセル")
+                }
+            },
+        )
+    }
+
+    if (confirmDeleteAllSoundEvents) {
+        AlertDialog(
+            onDismissRequest = { confirmDeleteAllSoundEvents = false },
+            title = { Text("音イベントをすべて削除しますか？") },
+            text = { Text("保存されているderived sound eventをすべて削除します。睡眠記録そのものは残ります。") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmDeleteAllSoundEvents = false
+                        onDismissSoundDeletionMessage()
+                        onDeleteAllSoundEvents()
+                    },
+                ) { Text("すべて削除") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDeleteAllSoundEvents = false }) {
+                    Text("キャンセル")
+                }
+            },
+        )
     }
 
     if (confirmDeletion) {

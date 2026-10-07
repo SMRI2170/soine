@@ -20,6 +20,8 @@ import app.soine.relationship.StoredCompanionProgressRepository
 import app.soine.sleep.StoredSleepSessionRepository
 import app.soine.sound.AndroidMicrophonePermissionController
 import app.soine.sound.AndroidSoundAnalysisPreferencesStore
+import app.soine.sound.AndroidSoundEventStore
+import app.soine.sound.StoredSoundEventRepository
 import app.soine.storage.AndroidSleepSessionStore
 
 class MainActivity : ComponentActivity() {
@@ -47,6 +49,8 @@ class MainActivity : ComponentActivity() {
         val repository = StoredSleepSessionRepository(sleepStore)
         val audioPreferences = AndroidAmbientAudioPreferencesStore(applicationContext)
         val soundAnalysisPreferences = AndroidSoundAnalysisPreferencesStore(applicationContext)
+        val soundEventStore = AndroidSoundEventStore(applicationContext)
+        val soundEventRepository = StoredSoundEventRepository(soundEventStore)
         val relationshipStore = AndroidRelationshipStateStore(applicationContext)
         val companionProgressRepository = StoredCompanionProgressRepository(relationshipStore)
         val dreamStore = AndroidDreamDiscoveryStore(applicationContext)
@@ -73,6 +77,7 @@ class MainActivity : ComponentActivity() {
                 LocalDataClearer { sleepStore.clear() },
                 LocalDataClearer { audioPreferences.clear() },
                 LocalDataClearer { soundAnalysisPreferences.clear() },
+                LocalDataClearer { soundEventStore.clear() },
                 LocalDataClearer { relationshipStore.clear() },
                 LocalDataClearer { dreamStore.clear() },
             ),
@@ -88,6 +93,7 @@ class MainActivity : ComponentActivity() {
                 accessibilityPreferences = accessibilityPreferences,
                 microphonePermissionController = microphonePermissionController,
                 soundAnalysisPreferencesStore = soundAnalysisPreferences,
+                soundEventRepository = soundEventRepository,
             )
         }
     }
