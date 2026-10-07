@@ -25,19 +25,25 @@ object PrototypeSoundFrameClassifier {
         require(occurredAtEpochMillis >= 0L) { "Event timestamp must not be negative." }
         if (sampleCount < MIN_FRAME_SAMPLES) return null
 
+        var sum = 0.0
+        for (index in 0 until sampleCount) {
+            sum += samples[index].toDouble() / PCM_SCALE
+        }
+        val mean = sum / sampleCount
+
         var sumSquares = 0.0
         var peak = 0.0
         var zeroCrossings = 0
-        var previous = samples[0].toDouble() / PCM_SCALE
+        var previous = samples[0].toDouble() / PCM_SCALE - mean
 
         for (index in 0 until sampleCount) {
-            val normalized = samples[index].toDouble() / PCM_SCALE
-            sumSquares += normalized * normalized
-            peak = maxOf(peak, abs(normalized))
-            if (index > 0 && (normalized >= 0.0) != (previous >= 0.0)) {
+            val centered = samples[index].toDouble() / PCM_SCALE - mean
+            sumSquares += centered * centered
+            peak = maxOf(peak, abs(centered))
+            if (index > 0 && (centered >= 0.0) != (previous >= 0.0)) {
                 zeroCrossings += 1
             }
-            previous = normalized
+            previous = centered
         }
 
         val rms = sqrt(sumSquares / sampleCount)
@@ -50,6 +56,7 @@ object PrototypeSoundFrameClassifier {
                 samples = samples,
                 sampleCount = sampleCount,
                 sampleRateHz = sampleRateHz,
+                mean = mean,
             )
         } else {
             0.0
@@ -87,6 +94,7 @@ object PrototypeSoundFrameClassifier {
         samples: ShortArray,
         sampleCount: Int,
         sampleRateHz: Int,
+        mean: Double,
     ): Double {
         val minLag = maxOf(1, sampleRateHz / MAX_PERIODIC_FREQUENCY_HZ)
         val maxLag = minOf(
@@ -103,8 +111,8 @@ object PrototypeSoundFrameClassifier {
             var rightEnergy = 0.0
 
             for (index in lag until sampleCount) {
-                val left = samples[index].toDouble() / PCM_SCALE
-                val right = samples[index - lag].toDouble() / PCM_SCALE
+                val left = samples[index].toDouble() / PCM_SCALE - mean
+                val right = samples[index - lag].toDouble() / PCM_SCALE - mean
                 numerator += left * right
                 leftEnergy += left * left
                 rightEnergy += right * right
