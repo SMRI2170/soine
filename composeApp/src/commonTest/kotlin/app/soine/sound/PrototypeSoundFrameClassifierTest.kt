@@ -20,6 +20,17 @@ class PrototypeSoundFrameClassifierTest {
     }
 
     @Test
+    fun dcBiasProducesNoEvent() {
+        assertNull(
+            PrototypeSoundFrameClassifier.classify(
+                samples = ShortArray(SAMPLE_RATE) { 1_500 },
+                sampleRateHz = SAMPLE_RATE,
+                occurredAtEpochMillis = 1_500L,
+            ),
+        )
+    }
+
+    @Test
     fun lowFrequencyPeriodicFrameProducesSnoreLikeEvent() {
         val result = PrototypeSoundFrameClassifier.classify(
             samples = sineWave(frequencyHz = 100.0, amplitude = 0.20),
