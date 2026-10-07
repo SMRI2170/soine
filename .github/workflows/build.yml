@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   verify:
-    name: commonTest + Android debug
+    name: commonTest + Android debug + lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -33,3 +33,12 @@ jobs:
           gradle-version: "9.5.0"
       - name: Run common tests and build Android debug APK
         run: gradle --no-daemon :composeApp:testAndroidHostTest :androidApp:assembleDebug
+      - name: Run Android lint
+        run: gradle --no-daemon :androidApp:lintDebug
+      - name: Upload Android lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-lint-report
+          path: androidApp/build/reports/lint-results-debug.html
+          if-no-files-found: ignore
