@@ -2,7 +2,16 @@ package app.soine
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
+import app.soine.accessibility.AccessibilityPreferences
+import app.soine.accessibility.DefaultAccessibilityPreferences
 import app.soine.audio.*
+import app.soine.companion.BedtimeSignatureController
+import app.soine.companion.BedtimeSignatureRunner
+import app.soine.companion.BedtimeSignatureState
+import app.soine.companion.CompanionRenderer
+import app.soine.companion.CompanionRelationshipStage
+import app.soine.companion.NoOpCompanionRenderer
+import app.soine.companion.toCompanionRelationshipStage
 import app.soine.dream.DreamDiscovery
 import app.soine.dream.DreamDiscoveryCoordinator
 import app.soine.dream.DreamDiscoveryRepository
@@ -16,6 +25,7 @@ import app.soine.relationship.CompanionProgressRepository
 import app.soine.sleep.SleepSessionRepository
 import app.soine.sleep.currentTimeMillis
 import app.soine.sound.*
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -33,6 +43,8 @@ fun SoineApp(
     ambientAudioController: AmbientAudioController,
     dreamDiscoveryRepository: DreamDiscoveryRepository,
     companionProgressRepository: CompanionProgressRepository,
+    accessibilityPreferences: AccessibilityPreferences = DefaultAccessibilityPreferences,
+    companionRenderer: CompanionRenderer = NoOpCompanionRenderer,
     microphonePermissionController: MicrophonePermissionController,
     soundAnalysisPreferencesStore: SoundAnalysisPreferencesStore,
     appVersion: String = "0.1.0",
@@ -47,6 +59,15 @@ fun SoineApp(
             relationshipRepository = companionProgressRepository,
         )
     }
+    val bedtimeSignatureController = remember(companionRenderer) {
+        BedtimeSignatureController(companionRenderer)
+    }
+    val bedtimeSignatureRunner = remember(bedtimeSignatureController) {
+        BedtimeSignatureRunner(
+            controller = bedtimeSignatureController,
+            wait = { millis -> delay(millis) },
+        )
+    }
     var destination by remember { mutableStateOf<BedtimeDestination>(BedtimeDestination.Loading) }
     var secondaryScreen by remember { mutableStateOf<SecondaryScreen?>(null) }
     var audioPreferences by remember(audioPreferencesStore) { mutableStateOf(audioPreferencesStore.read()) }
@@ -56,6 +77,8 @@ fun SoineApp(
     var deletionResult by remember { mutableStateOf<LocalDataDeletionResult?>(null) }
     var dreamDiscoveries by remember { mutableStateOf<List<DreamDiscovery>>(emptyList()) }
     var nightMemoryEntries by remember { mutableStateOf<List<NightMemoryEntry>>(emptyList()) }
+    var bedtimeSignatureState by remember { mutableStateOf<BedtimeSignatureState?>(null) }
+    var bedtimeSignatureJob by remember { mutableStateOf<Job?>(null) }
     var microphonePermissionState by remember(microphonePermissionController) {
         mutableStateOf(microphonePermissionController.state)
     }
@@ -133,6 +156,7 @@ fun SoineApp(
     val remainingMillis = audioPreferences.timerStopAtEpochMillis?.let {
         (it - nowEpochMillis).coerceAtLeast(0L)
     }
+    val reduceMotion = accessibilityPreferences.reduceMotionEnabled()
     val remainingLabel = remainingMillis?.let {
         val totalSeconds = (it + 999L) / 1_000L
         val minutes = totalSeconds / 60L
@@ -207,6 +231,9 @@ fun SoineApp(
                                 pendingSoundAnalysisEnable = false
                                 dreamDiscoveries = emptyList()
                                 nightMemoryEntries = emptyList()
+                                bedtimeSignatureJob?.cancel()
+                                bedtimeSignatureJob = null
+                                bedtimeSignatureState = null
                                 destination = BedtimeDestination.Bedtime
                             }
                             deletionResult = result
@@ -229,11 +256,29 @@ fun SoineApp(
                         if (next is BedtimeDestination.Sleeping) {
                             audioCoordinator.beginNight()
                             refreshAudioPreferences()
+                            bedtimeSignatureJob?.cancel()
+                            bedtimeSignatureState = null
+                            val relationshipStage = runCatching {
+                                companionProgressRepository
+                                    .get()
+                                    .familiarityStage
+                                    .toCompanionRelationshipStage()
+                            }.getOrDefault(CompanionRelationshipStage.NEW)
+                            bedtimeSignatureJob = scope.launch {
+                                runCatching {
+                                    bedtimeSignatureRunner.run(relationshipStage) { state ->
+                                        bedtimeSignatureState = state
+                                    }
+                                }
+                            }
                         }
                     }
                 },
                 onWake = {
                     scope.launch {
+                        bedtimeSignatureJob?.cancel()
+                        bedtimeSignatureJob = null
+                        bedtimeSignatureState = null
                         audioCoordinator.endNight()
                         refreshAudioPreferences()
                         val next = controller.finish()
@@ -263,6 +308,7 @@ fun SoineApp(
                 },
                 onDone = {
                     nightMemoryEntries = emptyList()
+                    bedtimeSignatureState = null
                     destination = controller.dismissMorning()
                 },
                 onRetry = { scope.launch { destination = controller.initialDestination() } },
@@ -272,6 +318,9 @@ fun SoineApp(
                     secondaryScreen = SecondaryScreen.SETTINGS
                 },
                 nightMemoryEntries = nightMemoryEntries,
+                sleepingCompanionIntent = bedtimeSignatureState?.step?.intent,
+                quietSleepUi = bedtimeSignatureState?.quietUi == true,
+                reduceMotion = reduceMotion,
                 ambientSoundLabel = ambientLabel,
                 defaultTimerLabel = defaultTimerLabel,
                 audioPlaying = playbackState.status == AmbientPlaybackStatus.PLAYING,
