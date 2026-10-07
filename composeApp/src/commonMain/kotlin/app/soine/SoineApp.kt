@@ -282,12 +282,17 @@ fun SoineApp(
                         scope.launch {
                             deletingLocalData = true
                             val result = localDataDeletionService.deleteAll()
+                            // Deletion continues across all local stores even when a later
+                            // clearer fails. Always reload this store so the UI reflects
+                            // what was actually removed rather than the aggregate result.
+                            soundEventSessions = runCatching {
+                                soundEventRepository.getAll().sessionSummaries()
+                            }.getOrDefault(emptyList())
                             if (result == LocalDataDeletionResult.Deleted) {
                                 audioCoordinator.endNight()
                                 audioPreferences = audioPreferencesStore.read()
                                 soundAnalysisPreferences = soundAnalysisPreferencesStore.read()
                                 pendingSoundAnalysisEnable = false
-                                soundEventSessions = emptyList()
                                 soundDeletionMessage = null
                                 dreamDiscoveries = emptyList()
                                 nightMemoryEntries = emptyList()
