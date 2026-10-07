@@ -17,10 +17,6 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
 
-        defaultConfig {
-            consumerProguardFiles("consumer-rules.pro")
-        }
-
         withHostTest {}
     }
 
