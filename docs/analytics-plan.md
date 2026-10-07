@@ -34,3 +34,17 @@ Reliability:
 ## Privacy
 
 Do not send raw audio, detailed Health samples, user-written private text, or exact sleep timelines to analytics by default.
+
+
+## Implementation boundary
+
+`commonMain` owns the vendor-neutral `AnalyticsTracker` contract and the
+fixed `AnalyticsEvent` vocabulary. Vendor SDK adapters belong in platform
+source sets or a future integration layer.
+
+The initial contract deliberately exposes no arbitrary event payload. This
+prevents accidental analytics collection of exact sleep timelines, Health
+samples, raw audio, user-written text, or other sensitive content.
+
+`NoOpAnalyticsTracker` is the default-safe implementation until an explicit
+analytics provider is selected.
