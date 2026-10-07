@@ -111,24 +111,32 @@ class IosAmbientAudioController(
         val type = (userInfo[AVAudioSessionInterruptionTypeKey] as? NSNumber)
             ?.unsignedIntegerValue
             ?: return
+        val began = type.toLong() == 1L
 
-        when (type.toLong()) {
-            1L -> {
-                resumeAfterInterruption = state.status == AmbientPlaybackStatus.PLAYING
-                pause()
+        if (began) {
+            resumeAfterInterruption = state.status == AmbientPlaybackStatus.PLAYING
+            pause()
+            return
+        }
+
+        val options = (userInfo[AVAudioSessionInterruptionOptionKey] as? NSNumber)
+            ?.unsignedIntegerValue
+            ?.toLong()
+            ?: 0L
+        val shouldResume = options and 1L != 0L
+
+        when (InterruptionPolicy.decide(
+            began = false,
+            wasPlaying = resumeAfterInterruption,
+            shouldResume = shouldResume,
+        )) {
+            InterruptionDecision.RESUME -> {
+                resumeAfterInterruption = false
+                resume()
             }
-            0L -> {
-                val options = (userInfo[AVAudioSessionInterruptionOptionKey] as? NSNumber)
-                    ?.unsignedIntegerValue
-                    ?.toLong()
-                    ?: 0L
-                val shouldResume = options and 1L != 0L
-                if (resumeAfterInterruption && shouldResume) {
-                    resumeAfterInterruption = false
-                    resume()
-                } else {
-                    resumeAfterInterruption = false
-                }
+            InterruptionDecision.STAY_PAUSED,
+            InterruptionDecision.PAUSE -> {
+                resumeAfterInterruption = false
             }
         }
     }
