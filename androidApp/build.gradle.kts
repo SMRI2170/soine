@@ -14,6 +14,20 @@ android {
         versionCode = 1
         versionName = "0.1.0"
     }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            isDebuggable = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+        }
+        debug {
+            isDebuggable = true
+        }
+    }
 }
 
 dependencies {
