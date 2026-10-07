@@ -38,20 +38,22 @@ class SleepDataSourceTest {
     }
 
     @Test
-    fun deniedAndUnavailableAreExplicitResults() = runHealthTest {
-        val source = FakeSleepDataSource(
-            permissionState = HealthPermissionState.DENIED,
-        )
+    fun deniedAndUnavailableAreExplicitResults() {
+        runHealthTest {
+            val source = FakeSleepDataSource(
+                permissionState = HealthPermissionState.DENIED,
+            )
 
-        assertIs<SleepSignalReadResult.PermissionDenied>(
-            source.readSleepSignals(1_000, 2_000),
-        )
+            assertIs<SleepSignalReadResult.PermissionDenied>(
+                source.readSleepSignals(1_000, 2_000),
+            )
 
-        source.permissionState = HealthPermissionState.UNAVAILABLE
+            source.permissionState = HealthPermissionState.UNAVAILABLE
 
-        assertIs<SleepSignalReadResult.Unavailable>(
-            source.readSleepSignals(1_000, 2_000),
-        )
+            assertIs<SleepSignalReadResult.Unavailable>(
+                source.readSleepSignals(1_000, 2_000),
+            )
+        }
     }
 
     @Test
