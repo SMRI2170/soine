@@ -70,7 +70,9 @@ class StoredSoundEventRepository(
     }
 
     override suspend fun deleteAll(): Int {
-        val count = getAll().size
+        // Explicit privacy deletion must remain available even when the stored
+        // snapshot is corrupt or from an unsupported future schema.
+        val count = runCatching { getAll().size }.getOrDefault(0)
         store.clear()
         return count
     }
