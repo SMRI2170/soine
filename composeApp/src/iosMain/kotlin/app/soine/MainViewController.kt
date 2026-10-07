@@ -10,16 +10,20 @@ import app.soine.privacy.LocalDataDeletionService
 import app.soine.relationship.IosRelationshipStateStore
 import app.soine.relationship.StoredCompanionProgressRepository
 import app.soine.sleep.StoredSleepSessionRepository
+import app.soine.sound.IosMicrophonePermissionController
+import app.soine.sound.IosSoundAnalysisPreferencesStore
 import app.soine.storage.IosSleepSessionStore
 
 fun MainViewController() = ComposeUIViewController {
     val sleepStore = IosSleepSessionStore()
     val repository = StoredSleepSessionRepository(sleepStore)
     val audioPreferences = IosAmbientAudioPreferencesStore()
+    val soundAnalysisPreferences = IosSoundAnalysisPreferencesStore()
     val relationshipStore = IosRelationshipStateStore()
     val companionProgressRepository = StoredCompanionProgressRepository(relationshipStore)
     val dreamStore = IosDreamDiscoveryStore()
     val dreamDiscoveryRepository = StoredDreamDiscoveryRepository(dreamStore)
+    val microphonePermissionController = IosMicrophonePermissionController()
     val audioController = IosAmbientAudioController { sound ->
         when (sound.id) {
             "rain" -> "ambient_rain.wav"
@@ -33,6 +37,7 @@ fun MainViewController() = ComposeUIViewController {
         clearers = listOf(
             LocalDataClearer { sleepStore.clear() },
             LocalDataClearer { audioPreferences.clear() },
+            LocalDataClearer { soundAnalysisPreferences.clear() },
             LocalDataClearer { relationshipStore.clear() },
             LocalDataClearer { dreamStore.clear() },
         ),
@@ -44,5 +49,7 @@ fun MainViewController() = ComposeUIViewController {
         ambientAudioController = audioController,
         dreamDiscoveryRepository = dreamDiscoveryRepository,
         companionProgressRepository = companionProgressRepository,
+        microphonePermissionController = microphonePermissionController,
+        soundAnalysisPreferencesStore = soundAnalysisPreferences,
     )
 }
