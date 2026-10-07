@@ -5,11 +5,14 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.health.connect.client.PermissionController
 import app.soine.accessibility.AndroidAccessibilityPreferences
 import app.soine.audio.AndroidAmbientAudioPreferencesStore
 import app.soine.audio.ForegroundAmbientAudioController
 import app.soine.dream.AndroidDreamDiscoveryStore
 import app.soine.dream.StoredDreamDiscoveryRepository
+import app.soine.health.AndroidHealthConnectSleepDataSource
+import app.soine.health.AndroidHealthPermissionRequestCoordinator
 import app.soine.privacy.LocalDataClearer
 import app.soine.privacy.LocalDataDeletionService
 import app.soine.relationship.AndroidRelationshipStateStore
@@ -21,10 +24,21 @@ import app.soine.storage.AndroidSleepSessionStore
 
 class MainActivity : ComponentActivity() {
     private lateinit var microphonePermissionController: AndroidMicrophonePermissionController
+    private lateinit var healthPermissionRequestCoordinator: AndroidHealthPermissionRequestCoordinator
+    private lateinit var healthSleepDataSource: AndroidHealthConnectSleepDataSource
 
     private val microphonePermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) {
             microphonePermissionController.refresh()
+        }
+
+    private val healthPermissionLauncher =
+        registerForActivityResult(
+            PermissionController.createRequestPermissionResultContract(),
+        ) { grantedPermissions ->
+            if (::healthPermissionRequestCoordinator.isInitialized) {
+                healthPermissionRequestCoordinator.complete(grantedPermissions)
+            }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,6 +54,10 @@ class MainActivity : ComponentActivity() {
         val accessibilityPreferences = AndroidAccessibilityPreferences(applicationContext)
         microphonePermissionController = AndroidMicrophonePermissionController(this) {
             microphonePermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+        healthPermissionRequestCoordinator = AndroidHealthPermissionRequestCoordinator()
+        healthSleepDataSource = AndroidHealthConnectSleepDataSource(applicationContext) { permissions ->
+            healthPermissionRequestCoordinator.request(healthPermissionLauncher, permissions)
         }
         val audioController = ForegroundAmbientAudioController(applicationContext) { sound ->
             when (sound.id) {
@@ -79,5 +97,12 @@ class MainActivity : ComponentActivity() {
         if (::microphonePermissionController.isInitialized) {
             microphonePermissionController.refresh()
         }
+    }
+
+    override fun onDestroy() {
+        if (::healthPermissionRequestCoordinator.isInitialized) {
+            healthPermissionRequestCoordinator.cancel()
+        }
+        super.onDestroy()
     }
 }
