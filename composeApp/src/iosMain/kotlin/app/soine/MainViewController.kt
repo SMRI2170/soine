@@ -13,6 +13,8 @@ import app.soine.relationship.StoredCompanionProgressRepository
 import app.soine.sleep.StoredSleepSessionRepository
 import app.soine.sound.IosMicrophonePermissionController
 import app.soine.sound.IosSoundAnalysisPreferencesStore
+import app.soine.sound.IosSoundEventStore
+import app.soine.sound.StoredSoundEventRepository
 import app.soine.storage.IosSleepSessionStore
 
 fun MainViewController() = ComposeUIViewController {
@@ -20,6 +22,8 @@ fun MainViewController() = ComposeUIViewController {
     val repository = StoredSleepSessionRepository(sleepStore)
     val audioPreferences = IosAmbientAudioPreferencesStore()
     val soundAnalysisPreferences = IosSoundAnalysisPreferencesStore()
+    val soundEventStore = IosSoundEventStore()
+    val soundEventRepository = StoredSoundEventRepository(soundEventStore)
     val relationshipStore = IosRelationshipStateStore()
     val companionProgressRepository = StoredCompanionProgressRepository(relationshipStore)
     val dreamStore = IosDreamDiscoveryStore()
@@ -40,6 +44,7 @@ fun MainViewController() = ComposeUIViewController {
             LocalDataClearer { sleepStore.clear() },
             LocalDataClearer { audioPreferences.clear() },
             LocalDataClearer { soundAnalysisPreferences.clear() },
+            LocalDataClearer { soundEventStore.clear() },
             LocalDataClearer { relationshipStore.clear() },
             LocalDataClearer { dreamStore.clear() },
         ),
@@ -54,5 +59,6 @@ fun MainViewController() = ComposeUIViewController {
         accessibilityPreferences = accessibilityPreferences,
         microphonePermissionController = microphonePermissionController,
         soundAnalysisPreferencesStore = soundAnalysisPreferences,
+        soundEventRepository = soundEventRepository,
     )
 }
