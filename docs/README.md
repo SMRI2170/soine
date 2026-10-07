@@ -30,6 +30,7 @@ Start here when implementing Soine.
 - ios-healthkit.md — iOS HealthKit sleep adapter
 - accessibility.md — core-flow accessibility and reduce-motion baseline
 - sound-event-model.md — derived overnight sound-event contract
+- android-sound-detection.md — Android microphone foreground-service spike and field-test plan
 - analytics-plan.md — validation metrics
 - testing-strategy.md — release quality
 
