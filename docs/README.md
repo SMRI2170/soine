@@ -23,6 +23,7 @@ Start here when implementing Soine.
 - dream-system.md — collectible dreams
 - 3d-plan.md — renderer PoC
 - privacy.md — permissions/data handling
+- sound-event-model.md — derived overnight sound-event contract
 - analytics-plan.md — validation metrics
 - testing-strategy.md — release quality
 
