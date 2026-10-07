@@ -274,7 +274,9 @@ fun PrivacyDataScreen(
                         Column(Modifier.weight(1f)) {
                             Text(
                                 "最終イベント " +
-                                    formatJapaneseDiscoveryDate(summary.latestOccurredAtEpochMillis),
+                                    formatJapaneseDiscoveryDate(summary.latestOccurredAtEpochMillis) +
+                                    " " +
+                                    formatJapaneseNightEventTime(summary.latestOccurredAtEpochMillis),
                             )
                             Text(
                                 summary.eventCount.toString() + "件の音イベント",
