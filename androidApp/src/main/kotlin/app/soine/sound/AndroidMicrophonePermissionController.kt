@@ -51,7 +51,6 @@ class AndroidMicrophonePermissionController(
 
     override fun refresh() {
         val next = readState()
-        if (next == state) return
         state = next
         observers.toList().forEach { it.onPermissionStateChanged(next) }
     }
