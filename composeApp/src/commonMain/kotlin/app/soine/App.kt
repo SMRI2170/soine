@@ -58,6 +58,7 @@ fun App(
                 is BedtimeDestination.Sleeping -> SleepingScreen(
                     session = destination.session.toUiSession(),
                     onWake = onWake,
+                    onOpenSettings = onOpenSettings,
                     ambientSoundLabel = ambientSoundLabel,
                     audioPlaying = audioPlaying,
                     remainingTimerLabel = remainingTimerLabel,
@@ -164,6 +165,7 @@ private fun BedtimeScreen(
 private fun SleepingScreen(
     session: SleepSession,
     onWake: () -> Unit,
+    onOpenSettings: () -> Unit,
     ambientSoundLabel: String,
     audioPlaying: Boolean,
     remainingTimerLabel: String?,
@@ -187,7 +189,19 @@ private fun SleepingScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("おやすみ", style = MaterialTheme.typography.titleMedium)
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("おやすみ", style = MaterialTheme.typography.titleMedium)
+                TextButton(
+                    onClick = onOpenSettings,
+                    modifier = Modifier.heightIn(min = AccessibilityPolicy.MIN_TOUCH_TARGET_DP.dp),
+                ) {
+                    Text("設定")
+                }
+            }
             Spacer(Modifier.height(24.dp))
             CompanionScene(
                 state = SleepState.SLEEPING,
