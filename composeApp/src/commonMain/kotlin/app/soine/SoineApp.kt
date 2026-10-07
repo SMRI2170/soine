@@ -224,7 +224,7 @@ fun SoineApp(
                             if (events != null) {
                                 scope.launch {
                                     runCatching {
-                                        soundEventRepository.replaceSessionEvents(
+                                        soundEventRepository.appendSessionEvents(
                                             sleepingSession.id,
                                             events,
                                         )
@@ -400,7 +400,7 @@ fun SoineApp(
                                 // Persist derived events before completing the session so
                                 // a later sleep-finalization failure cannot lose them.
                                 runCatching {
-                                    soundEventRepository.replaceSessionEvents(
+                                    soundEventRepository.appendSessionEvents(
                                         activeSessionId,
                                         derivedEvents,
                                     )

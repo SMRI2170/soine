@@ -3,6 +3,7 @@ package app.soine.audio
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.AVFAudio.AVAudioPlayer
 import platform.AVFAudio.AVAudioSession
+import platform.AVFAudio.AVAudioSessionCategoryPlayAndRecord
 import platform.AVFAudio.AVAudioSessionCategoryPlayback
 import platform.AVFAudio.AVAudioSessionInterruptionNotification
 import platform.AVFAudio.AVAudioSessionInterruptionOptionKey
@@ -54,7 +55,11 @@ class IosAmbientAudioController(
         val path = NSBundle.mainBundle.pathForResource(base, ext) ?: return
         val url = NSURL.fileURLWithPath(path)
 
-        session.setCategory(AVAudioSessionCategoryPlayback, error = null)
+        // Preserve play-and-record while optional overnight microphone analysis
+        // is active. Replacing it with playback would tear down microphone input.
+        if (session.category != AVAudioSessionCategoryPlayAndRecord) {
+            session.setCategory(AVAudioSessionCategoryPlayback, error = null)
+        }
         val created = AVAudioPlayer(contentsOfURL = url, error = null) ?: return
         created.numberOfLoops = if (sound.loop) -1 else 0
         created.volume = sound.defaultVolume
