@@ -41,6 +41,7 @@ Start here when implementing Soine.
 - analytics-plan.md — validation metrics
 - testing-strategy.md — release quality
 - store-listing-facts.md — bundle IDs, permissions, capabilities, privacy copy inputs ([#181][issue-181])
+- quality-epic-status.md — closure summary for the quality hardening EPIC ([#183][issue-183])
 
 ## Decisions
 - decisions/0001-kmp-app-shell.md
@@ -52,3 +53,4 @@ Start here when implementing Soine.
 [issue-187]: https://github.com/SMRI2170/soine/issues/187
 [issue-182]: https://github.com/SMRI2170/soine/issues/182
 [issue-181]: https://github.com/SMRI2170/soine/issues/181
+[issue-183]: https://github.com/SMRI2170/soine/issues/183
