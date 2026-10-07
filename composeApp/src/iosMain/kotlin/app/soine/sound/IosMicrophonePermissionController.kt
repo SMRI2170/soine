@@ -12,6 +12,8 @@ import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationDidBecomeActiveNotification
 import platform.UIKit.UIApplicationOpenSettingsURLString
 import platform.darwin.NSObjectProtocol
+import platform.darwin.dispatch_async
+import platform.darwin.dispatch_get_main_queue
 
 @OptIn(ExperimentalForeignApi::class)
 class IosMicrophonePermissionController : MicrophonePermissionController, AutoCloseable {
@@ -43,7 +45,9 @@ class IosMicrophonePermissionController : MicrophonePermissionController, AutoCl
         if (state != MicrophonePermissionState.NOT_REQUESTED) return
 
         session.requestRecordPermission {
-            refresh()
+            dispatch_async(dispatch_get_main_queue()) {
+                refresh()
+            }
         }
     }
 
@@ -54,7 +58,6 @@ class IosMicrophonePermissionController : MicrophonePermissionController, AutoCl
 
     override fun refresh() {
         val next = readState()
-        if (next == state) return
         state = next
         observers.toList().forEach { it.onPermissionStateChanged(next) }
     }
