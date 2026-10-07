@@ -75,8 +75,8 @@ class SleepDataSourceTest {
 
         val result = source.readSleepSignals(1_000, 3_000)
 
-        assertIs<SleepSignalReadResult.Available>(result)
-        assertEquals(listOf(included), result.signals)
+        val available = assertIs<SleepSignalReadResult.Available>(result)
+        assertEquals(listOf(included), available.signals)
         assertEquals(1, source.readRequestCount)
     }
 
