@@ -25,7 +25,7 @@ interface SoundEventRepository {
     suspend fun getAll(): List<StoredSoundEvent>
     suspend fun replaceSessionEvents(sessionId: String, events: List<SoundEvent>)
     suspend fun deleteSession(sessionId: String): Int
-    suspend fun deleteAll(): Int
+    suspend fun deleteAll(): Int?
 }
 
 class StoredSoundEventRepository(
@@ -69,10 +69,12 @@ class StoredSoundEventRepository(
         return removed
     }
 
-    override suspend fun deleteAll(): Int {
+    override suspend fun deleteAll(): Int? {
         // Explicit privacy deletion must remain available even when the stored
-        // snapshot is corrupt or from an unsupported future schema.
-        val count = runCatching { getAll().size }.getOrDefault(0)
+        // snapshot is corrupt or from an unsupported future schema. A null
+        // count means data was cleared successfully but could not be decoded
+        // well enough to report an exact number of removed events.
+        val count = runCatching { getAll().size }.getOrNull()
         store.clear()
         return count
     }
