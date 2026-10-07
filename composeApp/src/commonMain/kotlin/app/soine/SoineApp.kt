@@ -48,6 +48,8 @@ fun SoineApp(
     microphonePermissionController: MicrophonePermissionController,
     soundAnalysisPreferencesStore: SoundAnalysisPreferencesStore,
     soundEventRepository: SoundEventRepository,
+    overnightSoundAnalysisController: OvernightSoundAnalysisController =
+        NoOpOvernightSoundAnalysisController,
     appVersion: String = "0.1.0",
 ) {
     val controller = remember(repository) { BedtimeFlowController(repository) }
@@ -205,6 +207,32 @@ fun SoineApp(
                     )
                     soundAnalysisPreferencesStore.write(next)
                     soundAnalysisPreferences = next
+
+                    val sleepingSession =
+                        (destination as? BedtimeDestination.Sleeping)?.session
+                    if (sleepingSession != null) {
+                        if (next.enabled) {
+                            // The Settings action is user-visible, satisfying Android's
+                            // while-in-use microphone foreground-service start rule.
+                            runCatching {
+                                overnightSoundAnalysisController.start(sleepingSession.id)
+                            }
+                        } else {
+                            val events = runCatching {
+                                overnightSoundAnalysisController.stop(sleepingSession.id)
+                            }.getOrNull()
+                            if (events != null) {
+                                scope.launch {
+                                    runCatching {
+                                        soundEventRepository.replaceSessionEvents(
+                                            sleepingSession.id,
+                                            events,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 },
                 onRequestMicrophonePermission = {
                     pendingSoundAnalysisEnable = true
@@ -326,6 +354,16 @@ fun SoineApp(
                         val next = controller.start()
                         destination = next
                         if (next is BedtimeDestination.Sleeping) {
+                            if (
+                                soundAnalysisPreferences.enabled &&
+                                microphonePermissionState == MicrophonePermissionState.GRANTED
+                            ) {
+                                // Optional enrichment: microphone failure must never
+                                // invalidate or roll back the persisted sleep session.
+                                runCatching {
+                                    overnightSoundAnalysisController.start(next.session.id)
+                                }
+                            }
                             audioCoordinator.beginNight()
                             refreshAudioPreferences()
                             bedtimeSignatureJob?.cancel()
@@ -351,6 +389,25 @@ fun SoineApp(
                         bedtimeSignatureJob?.cancel()
                         bedtimeSignatureJob = null
                         bedtimeSignatureState = null
+
+                        val activeSessionId =
+                            (destination as? BedtimeDestination.Sleeping)?.session?.id
+                        if (activeSessionId != null) {
+                            val derivedEvents = runCatching {
+                                overnightSoundAnalysisController.stop(activeSessionId)
+                            }.getOrNull()
+                            if (derivedEvents != null) {
+                                // Persist derived events before completing the session so
+                                // a later sleep-finalization failure cannot lose them.
+                                runCatching {
+                                    soundEventRepository.replaceSessionEvents(
+                                        activeSessionId,
+                                        derivedEvents,
+                                    )
+                                }
+                            }
+                        }
+
                         audioCoordinator.endNight()
                         refreshAudioPreferences()
                         val next = controller.finish()
