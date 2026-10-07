@@ -3,6 +3,13 @@ package app.soine
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import app.soine.audio.*
+import app.soine.companion.BedtimeSignatureController
+import app.soine.companion.BedtimeSignatureRunner
+import app.soine.companion.BedtimeSignatureState
+import app.soine.companion.CompanionRenderer
+import app.soine.companion.CompanionRelationshipStage
+import app.soine.companion.NoOpCompanionRenderer
+import app.soine.companion.toCompanionRelationshipStage
 import app.soine.dream.DreamDiscovery
 import app.soine.dream.DreamDiscoveryCoordinator
 import app.soine.dream.DreamDiscoveryRepository
@@ -15,6 +22,7 @@ import app.soine.privacy.LocalDataDeletionService
 import app.soine.relationship.CompanionProgressRepository
 import app.soine.sleep.SleepSessionRepository
 import app.soine.sleep.currentTimeMillis
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -32,6 +40,7 @@ fun SoineApp(
     ambientAudioController: AmbientAudioController,
     dreamDiscoveryRepository: DreamDiscoveryRepository,
     companionProgressRepository: CompanionProgressRepository,
+    companionRenderer: CompanionRenderer = NoOpCompanionRenderer,
     appVersion: String = "0.1.0",
 ) {
     val controller = remember(repository) { BedtimeFlowController(repository) }
@@ -44,6 +53,15 @@ fun SoineApp(
             relationshipRepository = companionProgressRepository,
         )
     }
+    val bedtimeSignatureController = remember(companionRenderer) {
+        BedtimeSignatureController(companionRenderer)
+    }
+    val bedtimeSignatureRunner = remember(bedtimeSignatureController) {
+        BedtimeSignatureRunner(
+            controller = bedtimeSignatureController,
+            wait = { millis -> delay(millis) },
+        )
+    }
     var destination by remember { mutableStateOf<BedtimeDestination>(BedtimeDestination.Loading) }
     var secondaryScreen by remember { mutableStateOf<SecondaryScreen?>(null) }
     var audioPreferences by remember(audioPreferencesStore) { mutableStateOf(audioPreferencesStore.read()) }
@@ -53,6 +71,8 @@ fun SoineApp(
     var deletionResult by remember { mutableStateOf<LocalDataDeletionResult?>(null) }
     var dreamDiscoveries by remember { mutableStateOf<List<DreamDiscovery>>(emptyList()) }
     var nightMemoryEntries by remember { mutableStateOf<List<NightMemoryEntry>>(emptyList()) }
+    var bedtimeSignatureState by remember { mutableStateOf<BedtimeSignatureState?>(null) }
+    var bedtimeSignatureJob by remember { mutableStateOf<Job?>(null) }
     val scope = rememberCoroutineScope()
 
     DisposableEffect(ambientAudioController) {
@@ -155,6 +175,9 @@ fun SoineApp(
                                 audioPreferences = audioPreferencesStore.read()
                                 dreamDiscoveries = emptyList()
                                 nightMemoryEntries = emptyList()
+                                bedtimeSignatureJob?.cancel()
+                                bedtimeSignatureJob = null
+                                bedtimeSignatureState = null
                                 destination = BedtimeDestination.Bedtime
                             }
                             deletionResult = result
@@ -177,11 +200,29 @@ fun SoineApp(
                         if (next is BedtimeDestination.Sleeping) {
                             audioCoordinator.beginNight()
                             refreshAudioPreferences()
+                            bedtimeSignatureJob?.cancel()
+                            bedtimeSignatureState = null
+                            val relationshipStage = runCatching {
+                                companionProgressRepository
+                                    .get()
+                                    .familiarityStage
+                                    .toCompanionRelationshipStage()
+                            }.getOrDefault(CompanionRelationshipStage.NEW)
+                            bedtimeSignatureJob = scope.launch {
+                                runCatching {
+                                    bedtimeSignatureRunner.run(relationshipStage) { state ->
+                                        bedtimeSignatureState = state
+                                    }
+                                }
+                            }
                         }
                     }
                 },
                 onWake = {
                     scope.launch {
+                        bedtimeSignatureJob?.cancel()
+                        bedtimeSignatureJob = null
+                        bedtimeSignatureState = null
                         audioCoordinator.endNight()
                         refreshAudioPreferences()
                         val next = controller.finish()
@@ -211,12 +252,15 @@ fun SoineApp(
                 },
                 onDone = {
                     nightMemoryEntries = emptyList()
+                    bedtimeSignatureState = null
                     destination = controller.dismissMorning()
                 },
                 onRetry = { scope.launch { destination = controller.initialDestination() } },
                 onOpenDreamAlbum = { secondaryScreen = SecondaryScreen.DREAM_ALBUM },
                 onOpenSettings = { secondaryScreen = SecondaryScreen.SETTINGS },
                 nightMemoryEntries = nightMemoryEntries,
+                sleepingCompanionIntent = bedtimeSignatureState?.step?.intent,
+                quietSleepUi = bedtimeSignatureState?.quietUi == true,
                 ambientSoundLabel = ambientLabel,
                 defaultTimerLabel = defaultTimerLabel,
                 audioPlaying = playbackState.status == AmbientPlaybackStatus.PLAYING,
