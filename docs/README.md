@@ -40,6 +40,7 @@ Start here when implementing Soine.
 - android-sound-detection.md — Android microphone foreground-service spike and field-test plan
 - analytics-plan.md — validation metrics
 - testing-strategy.md — release quality
+- store-listing-facts.md — bundle IDs, permissions, capabilities, privacy copy inputs ([#181][issue-181])
 
 ## Decisions
 - decisions/0001-kmp-app-shell.md
@@ -50,3 +51,4 @@ Start here when implementing Soine.
 [issue-186]: https://github.com/SMRI2170/soine/issues/186
 [issue-187]: https://github.com/SMRI2170/soine/issues/187
 [issue-182]: https://github.com/SMRI2170/soine/issues/182
+[issue-181]: https://github.com/SMRI2170/soine/issues/181
