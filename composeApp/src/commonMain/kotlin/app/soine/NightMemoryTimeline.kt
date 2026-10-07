@@ -16,6 +16,8 @@ import app.soine.night.InitialNightEventCatalog
 import app.soine.night.NightEvent
 import app.soine.night.NightEventAnimationIntent
 import app.soine.night.NightEventType
+import app.soine.time.LocalTimeZone
+import app.soine.time.LocalTimeZones
 
 data class NightMemoryEntry(
     val eventId: String,
@@ -32,6 +34,8 @@ fun buildNightMemoryEntries(
 ): List<NightMemoryEntry> {
     require(maxEntries in 0..3) { "Night-memory timeline supports at most three entries." }
 
+    val timeZone = LocalTimeZones.current
+
     return events
         .sortedWith(compareBy<NightEvent> { it.occurredAtEpochMillis }.thenBy { it.id })
         .mapNotNull { event ->
@@ -39,7 +43,7 @@ fun buildNightMemoryEntries(
             NightMemoryEntry(
                 eventId = event.id,
                 occurredAtEpochMillis = event.occurredAtEpochMillis,
-                timeLabel = formatJapaneseNightEventTime(event.occurredAtEpochMillis),
+                timeLabel = formatNightEventTime(event.occurredAtEpochMillis, timeZone),
                 line = definition.morningLine,
                 artKey = definition.animationIntent.toArtKey(),
                 glyph = event.type.toTimelineGlyph(),
@@ -48,10 +52,13 @@ fun buildNightMemoryEntries(
         .take(maxEntries)
 }
 
-fun formatJapaneseNightEventTime(epochMillis: Long): String {
+fun formatNightEventTime(
+    epochMillis: Long,
+    timeZone: LocalTimeZone = LocalTimeZones.current,
+): String {
     require(epochMillis >= 0L) { "NightEvent timestamp must not be negative." }
-    val localMillis = epochMillis + JAPAN_UTC_OFFSET_MILLIS
-    val millisOfDay = localMillis % MILLIS_PER_DAY
+    val localMillis = epochMillis + timeZone.utcOffsetMillisAt(epochMillis)
+    val millisOfDay = ((localMillis % MILLIS_PER_DAY) + MILLIS_PER_DAY) % MILLIS_PER_DAY
     val hours = millisOfDay / MILLIS_PER_HOUR
     val minutes = (millisOfDay % MILLIS_PER_HOUR) / MILLIS_PER_MINUTE
     return hours.toString().padStart(2, '0') + ":" +
@@ -75,7 +82,6 @@ private fun NightEventType.toTimelineGlyph(): String = when (this) {
 private const val MILLIS_PER_MINUTE = 60_000L
 private const val MILLIS_PER_HOUR = 60L * MILLIS_PER_MINUTE
 private const val MILLIS_PER_DAY = 24L * MILLIS_PER_HOUR
-private const val JAPAN_UTC_OFFSET_MILLIS = 9L * MILLIS_PER_HOUR
 
 @Composable
 fun NightMemoryTimeline(entries: List<NightMemoryEntry>) {

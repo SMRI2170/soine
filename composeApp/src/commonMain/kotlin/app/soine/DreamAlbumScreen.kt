@@ -81,10 +81,13 @@ private fun RarityBand.toGentleLabel(): String = when (this) {
     RarityBand.RARE -> "めずらしい夢"
 }
 
-fun formatJapaneseDiscoveryDate(epochMillis: Long): String {
+fun formatJapaneseDiscoveryDate(
+    epochMillis: Long,
+    timeZone: app.soine.time.LocalTimeZone = app.soine.time.LocalTimeZones.current,
+): String {
     require(epochMillis >= 0L) { "Discovery timestamp must not be negative." }
 
-    val localMillis = epochMillis + JAPAN_UTC_OFFSET_MILLIS
+    val localMillis = epochMillis + timeZone.utcOffsetMillisAt(epochMillis)
     val epochDay = localMillis / MILLIS_PER_DAY
     val date = civilDateFromEpochDay(epochDay)
     return date.year.toString() + "年" + date.month + "月" + date.day + "日"
@@ -112,7 +115,6 @@ private fun civilDateFromEpochDay(epochDay: Long): CivilDate {
 }
 
 private const val MILLIS_PER_DAY = 86_400_000L
-private const val JAPAN_UTC_OFFSET_MILLIS = 9L * 60L * 60L * 1_000L
 
 @Composable
 fun DreamAlbumScreen(
