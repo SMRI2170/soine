@@ -25,6 +25,20 @@ class SoundEventRepositoryTest {
     }
 
     @Test
+    fun appendSessionKeepsPreviouslyPersistedSegments() = runSoundTest {
+        val repository = StoredSoundEventRepository(FakeSoundEventStore())
+
+        repository.appendSessionEvents("night", listOf(event(1_000), event(2_000)))
+        repository.appendSessionEvents("night", listOf(event(3_000)))
+
+        val nightEvents = repository.getAll()
+            .filter { it.sessionId == "night" }
+            .map { it.event.occurredAtEpochMillis }
+
+        assertEquals(listOf(1_000L, 2_000L, 3_000L), nightEvents)
+    }
+
+    @Test
     fun deleteSessionDeletesOnlyThatSession() = runSoundTest {
         val repository = StoredSoundEventRepository(FakeSoundEventStore())
         repository.replaceSessionEvents("a", listOf(event(1_000), event(2_000)))
