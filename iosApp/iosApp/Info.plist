@@ -12,7 +12,7 @@
     <string>0.1.0</string>
     <key>CFBundleVersion</key>
     <string>1</string>
-    <key>UILaunchScreen</key>
+    <key>NSMicrophoneUsageDescription</key>\n    <string>寝言や大きな音など、夜の音イベントを端末内で見つけるために使います。</string>\n    <key>UILaunchScreen</key>
     <dict/>
     <key>UIBackgroundModes</key>
     <array>
