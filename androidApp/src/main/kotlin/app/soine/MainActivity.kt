@@ -1,6 +1,8 @@
 package app.soine
 
 import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -35,6 +37,12 @@ class MainActivity : ComponentActivity() {
             microphonePermissionController.refresh()
         }
 
+    private val notificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+            // Notification permission only controls user-visible disclosure.
+            // Sound analysis remains optional and sleep start never depends on it.
+        }
+
     private val healthPermissionLauncher =
         registerForActivityResult(
             PermissionController.createRequestPermissionResultContract(),
@@ -53,7 +61,9 @@ class MainActivity : ComponentActivity() {
         val soundEventStore = AndroidSoundEventStore(applicationContext)
         val soundEventRepository = StoredSoundEventRepository(soundEventStore)
         val overnightSoundAnalysisController =
-            AndroidOvernightSoundAnalysisController(applicationContext)
+            AndroidOvernightSoundAnalysisController(applicationContext) {
+                requestSoundAnalysisNotificationPermissionIfNeeded()
+            }
         val relationshipStore = AndroidRelationshipStateStore(applicationContext)
         val companionProgressRepository = StoredCompanionProgressRepository(relationshipStore)
         val dreamStore = AndroidDreamDiscoveryStore(applicationContext)
@@ -99,6 +109,15 @@ class MainActivity : ComponentActivity() {
                 soundEventRepository = soundEventRepository,
                 overnightSoundAnalysisController = overnightSoundAnalysisController,
             )
+        }
+    }
+
+    private fun requestSoundAnalysisNotificationPermissionIfNeeded() {
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 
