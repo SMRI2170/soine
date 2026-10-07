@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import app.soine.accessibility.AccessibilityPreferences
 import app.soine.accessibility.DefaultAccessibilityPreferences
+import app.soine.analytics.BedtimeAnalytics
 import app.soine.audio.*
 import app.soine.companion.BedtimeSignatureController
 import app.soine.companion.BedtimeSignatureRunner
@@ -51,8 +52,10 @@ fun SoineApp(
     overnightSoundAnalysisController: OvernightSoundAnalysisController =
         NoOpOvernightSoundAnalysisController,
     appVersion: String = "0.1.0",
+    bedtimeAnalytics: BedtimeAnalytics? = null,
 ) {
     val controller = remember(repository) { BedtimeFlowController(repository) }
+    val analytics = bedtimeAnalytics
     val audioCoordinator = remember(ambientAudioController, audioPreferencesStore) {
         BedtimeAudioCoordinator(ambientAudioController, audioPreferencesStore, ::currentTimeMillis)
     }
@@ -79,6 +82,7 @@ fun SoineApp(
     var deletingLocalData by remember { mutableStateOf(false) }
     var deletionResult by remember { mutableStateOf<LocalDataDeletionResult?>(null) }
     var dreamDiscoveries by remember { mutableStateOf<List<DreamDiscovery>>(emptyList()) }
+    var notifiedDreamIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var nightMemoryEntries by remember { mutableStateOf<List<NightMemoryEntry>>(emptyList()) }
     var bedtimeSignatureState by remember { mutableStateOf<BedtimeSignatureState?>(null) }
     var bedtimeSignatureJob by remember { mutableStateOf<Job?>(null) }
@@ -135,7 +139,9 @@ fun SoineApp(
         if (destination is BedtimeDestination.Sleeping) {
             audioCoordinator.recoverNight()
             refreshAudioPreferences()
+            analytics?.onSessionRecovered(destination.session.id)
         }
+        analytics?.onDestinationReached(destination)
 
         try {
             repository.getCompletedSessions().firstOrNull()?.let { latest ->
@@ -154,6 +160,13 @@ fun SoineApp(
             nowEpochMillis = currentTimeMillis()
             if (audioCoordinator.tick()) refreshAudioPreferences()
         }
+    }
+
+    LaunchedEffect(dreamDiscoveries, analytics) {
+        val discoveredIds = dreamDiscoveries.map { it.dreamId }.toSet()
+        val newDiscoveries = discoveredIds - notifiedDreamIds
+        newDiscoveries.forEach { id -> analytics?.onDreamDiscovered(id) }
+        notifiedDreamIds = discoveredIds
     }
 
     val selectedSound = AmbientSounds.find(audioPreferences.soundId) ?: AmbientSounds.Rain
@@ -354,6 +367,7 @@ fun SoineApp(
                         val next = controller.start()
                         destination = next
                         if (next is BedtimeDestination.Sleeping) {
+                            analytics?.onSleepStarted(next.session.id)
                             if (
                                 soundAnalysisPreferences.enabled &&
                                 microphonePermissionState == MicrophonePermissionState.GRANTED
@@ -413,6 +427,8 @@ fun SoineApp(
                         val next = controller.finish()
                         destination = next
                         if (next is BedtimeDestination.Morning) {
+                            analytics?.onSleepCompleted(next.session.id)
+                            analytics?.onDestinationReached(next)
                             try {
                                 dreamCoordinator.evaluateIfNeeded(next.session)
                                 dreamDiscoveries = dreamCoordinator.discoveries()
@@ -432,6 +448,7 @@ fun SoineApp(
                             } catch (_: Throwable) {
                                 emptyList()
                             }
+                            analytics?.onNightMemoryViewed(nightMemoryEntries.size)
                         }
                     }
                 },
@@ -439,6 +456,7 @@ fun SoineApp(
                     nightMemoryEntries = emptyList()
                     bedtimeSignatureState = null
                     destination = controller.dismissMorning()
+                    analytics?.onDestinationReached(destination)
                 },
                 onRetry = { scope.launch { destination = controller.initialDestination() } },
                 onOpenDreamAlbum = { secondaryScreen = SecondaryScreen.DREAM_ALBUM },
