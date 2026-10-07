@@ -5,11 +5,17 @@ import android.content.Intent
 
 class AndroidOvernightSoundAnalysisController(
     context: Context,
+    private val requestNotificationDisclosurePermission: () -> Unit = {},
 ) : OvernightSoundAnalysisController {
     private val appContext = context.applicationContext
 
     override fun start(sessionId: String) {
         require(sessionId.isNotBlank()) { "Sound analysis session id must not be blank." }
+
+        // Notification permission is disclosure-only on Android 13+: denial must
+        // not block the foreground service or the core sleep session.
+        requestNotificationDisclosurePermission()
+
         if (!AndroidOvernightSoundRuntime.begin(sessionId)) return
 
         try {
