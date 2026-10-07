@@ -3,6 +3,7 @@ package app.soine
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import app.soine.accessibility.AndroidAccessibilityPreferences
 import app.soine.audio.AndroidAmbientAudioPreferencesStore
 import app.soine.audio.ForegroundAmbientAudioController
 import app.soine.dream.AndroidDreamDiscoveryStore
@@ -24,6 +25,7 @@ class MainActivity : ComponentActivity() {
         val companionProgressRepository = StoredCompanionProgressRepository(relationshipStore)
         val dreamStore = AndroidDreamDiscoveryStore(applicationContext)
         val dreamDiscoveryRepository = StoredDreamDiscoveryRepository(dreamStore)
+        val accessibilityPreferences = AndroidAccessibilityPreferences(applicationContext)
         val audioController = ForegroundAmbientAudioController(applicationContext) { sound ->
             when (sound.id) {
                 "rain" -> R.raw.ambient_rain
@@ -49,6 +51,7 @@ class MainActivity : ComponentActivity() {
                 ambientAudioController = audioController,
                 dreamDiscoveryRepository = dreamDiscoveryRepository,
                 companionProgressRepository = companionProgressRepository,
+                accessibilityPreferences = accessibilityPreferences,
             )
         }
     }

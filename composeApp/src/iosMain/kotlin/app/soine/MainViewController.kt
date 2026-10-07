@@ -1,6 +1,7 @@
 package app.soine
 
 import androidx.compose.ui.window.ComposeUIViewController
+import app.soine.accessibility.IosAccessibilityPreferences
 import app.soine.audio.IosAmbientAudioController
 import app.soine.audio.IosAmbientAudioPreferencesStore
 import app.soine.dream.IosDreamDiscoveryStore
@@ -20,6 +21,7 @@ fun MainViewController() = ComposeUIViewController {
     val companionProgressRepository = StoredCompanionProgressRepository(relationshipStore)
     val dreamStore = IosDreamDiscoveryStore()
     val dreamDiscoveryRepository = StoredDreamDiscoveryRepository(dreamStore)
+    val accessibilityPreferences = IosAccessibilityPreferences()
     val audioController = IosAmbientAudioController { sound ->
         when (sound.id) {
             "rain" -> "ambient_rain.wav"
@@ -44,5 +46,6 @@ fun MainViewController() = ComposeUIViewController {
         ambientAudioController = audioController,
         dreamDiscoveryRepository = dreamDiscoveryRepository,
         companionProgressRepository = companionProgressRepository,
+        accessibilityPreferences = accessibilityPreferences,
     )
 }

@@ -2,6 +2,8 @@ package app.soine
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
+import app.soine.accessibility.AccessibilityPreferences
+import app.soine.accessibility.DefaultAccessibilityPreferences
 import app.soine.audio.*
 import app.soine.companion.BedtimeSignatureController
 import app.soine.companion.BedtimeSignatureRunner
@@ -40,6 +42,7 @@ fun SoineApp(
     ambientAudioController: AmbientAudioController,
     dreamDiscoveryRepository: DreamDiscoveryRepository,
     companionProgressRepository: CompanionProgressRepository,
+    accessibilityPreferences: AccessibilityPreferences = DefaultAccessibilityPreferences,
     companionRenderer: CompanionRenderer = NoOpCompanionRenderer,
     appVersion: String = "0.1.0",
 ) {
@@ -122,6 +125,7 @@ fun SoineApp(
     val remainingMillis = audioPreferences.timerStopAtEpochMillis?.let {
         (it - nowEpochMillis).coerceAtLeast(0L)
     }
+    val reduceMotion = accessibilityPreferences.reduceMotionEnabled()
     val remainingLabel = remainingMillis?.let {
         val totalSeconds = (it + 999L) / 1_000L
         val minutes = totalSeconds / 60L
@@ -261,6 +265,7 @@ fun SoineApp(
                 nightMemoryEntries = nightMemoryEntries,
                 sleepingCompanionIntent = bedtimeSignatureState?.step?.intent,
                 quietSleepUi = bedtimeSignatureState?.quietUi == true,
+                reduceMotion = reduceMotion,
                 ambientSoundLabel = ambientLabel,
                 defaultTimerLabel = defaultTimerLabel,
                 audioPlaying = playbackState.status == AmbientPlaybackStatus.PLAYING,
