@@ -16,6 +16,8 @@ Ask only when the user explicitly enables a feature.
 Microphone:
 "寝言や大きな音など、夜の音イベントを端末内で見つけるために使います。"
 
+The app shows Soine's pre-permission explanation first. OS microphone permission is requested only after the user explicitly enables night sound analysis and accepts that explanation.
+
 Health:
 "端末やウェアラブルの睡眠記録を、Soineの朝の記録に追加できます。"
 
