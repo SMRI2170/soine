@@ -262,8 +262,14 @@ fun SoineApp(
                             val result = runCatching { soundEventRepository.deleteAll() }
                             soundDeletionMessage = result.fold(
                                 onSuccess = { count ->
-                                    if (count > 0) count.toString() + "件の音イベントをすべて削除しました。"
-                                    else "保存された音イベントはありませんでした。"
+                                    when {
+                                        count == null ->
+                                            "保存されていた音イベントデータを削除しました。"
+                                        count > 0 ->
+                                            count.toString() + "件の音イベントをすべて削除しました。"
+                                        else ->
+                                            "保存された音イベントはありませんでした。"
+                                    }
                                 },
                                 onFailure = {
                                     "音イベントを削除できませんでした。もう一度お試しください。"
