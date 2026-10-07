@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import app.soine.accessibility.AndroidAccessibilityPreferences
 import app.soine.audio.AndroidAmbientAudioPreferencesStore
 import app.soine.audio.ForegroundAmbientAudioController
 import app.soine.dream.AndroidDreamDiscoveryStore
@@ -36,6 +37,7 @@ class MainActivity : ComponentActivity() {
         val companionProgressRepository = StoredCompanionProgressRepository(relationshipStore)
         val dreamStore = AndroidDreamDiscoveryStore(applicationContext)
         val dreamDiscoveryRepository = StoredDreamDiscoveryRepository(dreamStore)
+        val accessibilityPreferences = AndroidAccessibilityPreferences(applicationContext)
         microphonePermissionController = AndroidMicrophonePermissionController(this) {
             microphonePermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
@@ -65,6 +67,7 @@ class MainActivity : ComponentActivity() {
                 ambientAudioController = audioController,
                 dreamDiscoveryRepository = dreamDiscoveryRepository,
                 companionProgressRepository = companionProgressRepository,
+                accessibilityPreferences = accessibilityPreferences,
                 microphonePermissionController = microphonePermissionController,
                 soundAnalysisPreferencesStore = soundAnalysisPreferences,
             )
