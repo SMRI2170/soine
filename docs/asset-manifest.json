@@ -1,0 +1,92 @@
+{
+  "$schema-note": "Reference inventory for binary / asset size tracking. Values are the current sizes on main; CI should diff against the previous release manifest and fail when any value grows by more than 25 percent. See docs/performance-budget.md.",
+  "version": "2026-10-07",
+  "assets": [
+    {
+      "id": "companion_glb",
+      "path": "assets/companion/soine_companion.glb",
+      "kind": "3d",
+      "sizeBytes": 30616,
+      "budgetBytes": 61440,
+      "hardCeilingBytes": 204800,
+      "platform": "shared"
+    },
+    {
+      "id": "ambient_rain_android",
+      "path": "androidApp/src/main/res/raw/ambient_rain.wav",
+      "kind": "audio",
+      "sizeBytes": 96044,
+      "budgetBytes": 20480,
+      "hardCeilingBytes": 96044,
+      "platform": "android",
+      "notes": "WAV. Should be re-encoded to OGG Vorbis / AAC; see performance-budget.md."
+    },
+    {
+      "id": "ambient_waves_android",
+      "path": "androidApp/src/main/res/raw/ambient_waves.wav",
+      "kind": "audio",
+      "sizeBytes": 96044,
+      "budgetBytes": 20480,
+      "hardCeilingBytes": 96044,
+      "platform": "android",
+      "notes": "WAV. Should be re-encoded to OGG Vorbis / AAC; see performance-budget.md."
+    },
+    {
+      "id": "ambient_white_noise_android",
+      "path": "androidApp/src/main/res/raw/ambient_white_noise.wav",
+      "kind": "audio",
+      "sizeBytes": 96044,
+      "budgetBytes": 20480,
+      "hardCeilingBytes": 96044,
+      "platform": "android",
+      "notes": "WAV. Should be re-encoded to OGG Vorbis / AAC; see performance-budget.md."
+    },
+    {
+      "id": "ambient_rain_ios",
+      "path": "iosApp/iosApp/Resources/ambient_rain.wav",
+      "kind": "audio",
+      "sizeBytes": 96044,
+      "budgetBytes": 20480,
+      "hardCeilingBytes": 96044,
+      "platform": "ios",
+      "notes": "WAV. Should be re-encoded to AAC; see performance-budget.md."
+    },
+    {
+      "id": "ambient_waves_ios",
+      "path": "iosApp/iosApp/Resources/ambient_waves.wav",
+      "kind": "audio",
+      "sizeBytes": 96044,
+      "budgetBytes": 20480,
+      "hardCeilingBytes": 96044,
+      "platform": "ios",
+      "notes": "WAV. Should be re-encoded to AAC; see performance-budget.md."
+    },
+    {
+      "id": "ambient_white_noise_ios",
+      "path": "iosApp/iosApp/Resources/ambient_white_noise.wav",
+      "kind": "audio",
+      "sizeBytes": 96044,
+      "budgetBytes": 20480,
+      "hardCeilingBytes": 96044,
+      "platform": "ios",
+      "notes": "WAV. Should be re-encoded to AAC; see performance-budget.md."
+    }
+  ],
+  "totals": {
+    "shared": {
+      "assetBytes": 30616
+    },
+    "android": {
+      "audioBytes": 288132,
+      "assetBytes": 318748,
+      "budgetBytes": 61440,
+      "hardCeilingBytes": 318748
+    },
+    "ios": {
+      "audioBytes": 288132,
+      "assetBytes": 318748,
+      "budgetBytes": 61440,
+      "hardCeilingBytes": 318748
+    }
+  }
+}
