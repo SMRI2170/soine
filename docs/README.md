@@ -6,7 +6,7 @@ Start here when implementing Soine.
 - [issues.md](issues.md) — priorities, Epics, dependency order and AI-agent workflow
 - ../AGENTS.md — repository-wide implementation rules
 - roadmap.md — product milestones
-- GitHub Issues — executable work items
+- GitHub Issues — issues / executable work items
 
 ## Product
 - product.md — product brief
@@ -24,6 +24,10 @@ Start here when implementing Soine.
 - 3d-plan.md — renderer PoC
 - privacy.md — permissions/data handling
 - failure-matrix.md — failure containment matrix and severity classification ([#185][issue-185])
+- security-audit-2026-10.md — V1 least-privilege / privacy audit snapshot ([#186][issue-186])
+- performance-budget.md — binary / runtime / memory / battery budget targets ([#184][issue-184])
+- asset-manifest.json — reference asset inventory for size-diff tracking ([#184][issue-184])
+- overnight-battery-benchmark.md — overnight battery measurement template
 - microphone-permission-ux.md — opt-in microphone permission flow
 - health-data-contract.md — normalized Health sleep-data boundary
 - health-merge-policy.md — manual session vs external Health precedence
@@ -39,4 +43,6 @@ Start here when implementing Soine.
 - decisions/0001-kmp-app-shell.md
 - decisions/0002-local-first.md
 
+[issue-184]: https://github.com/SMRI2170/soine/issues/184
 [issue-185]: https://github.com/SMRI2170/soine/issues/185
+[issue-186]: https://github.com/SMRI2170/soine/issues/186
