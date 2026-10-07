@@ -151,7 +151,7 @@ class IosHealthKitSleepDataSource(
                     PlatformSleepStage(
                         startEpochMillis = sample.startDate.toEpochMillis(),
                         endEpochMillis = sample.endDate.toEpochMillis(),
-                        type = sample.value.toInt().toSignalType(),
+                        type = sample.value.toSignalType(),
                     ),
                 ),
                 sourceId = source.bundleIdentifier,
@@ -170,7 +170,7 @@ class IosHealthKitSleepDataSource(
     private fun NSDate.toEpochMillis(): Long =
         (timeIntervalSince1970 * 1_000.0).toLong()
 
-    private fun Int.toSignalType(): SleepSignalType = when (this) {
+    private fun Long.toSignalType(): SleepSignalType = when (this) {
         HKCategoryValueSleepAnalysisAwake ->
             SleepSignalType.AWAKE
 
