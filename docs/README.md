@@ -23,6 +23,7 @@ Start here when implementing Soine.
 - dream-system.md — collectible dreams
 - 3d-plan.md — renderer PoC
 - privacy.md — permissions/data handling
+- failure-matrix.md — failure containment matrix and severity classification ([#185][issue-185])
 - microphone-permission-ux.md — opt-in microphone permission flow
 - health-data-contract.md — normalized Health sleep-data boundary
 - health-merge-policy.md — manual session vs external Health precedence
@@ -37,3 +38,5 @@ Start here when implementing Soine.
 ## Decisions
 - decisions/0001-kmp-app-shell.md
 - decisions/0002-local-first.md
+
+[issue-185]: https://github.com/SMRI2170/soine/issues/185
