@@ -10,19 +10,12 @@ on:
       - "settings.gradle.kts"
       - "build.gradle.kts"
       - ".github/workflows/ios.yml"
-  push:
-    branches: [main]
-    paths:
-      - "composeApp/**"
-      - "iosApp/**"
-      - "gradle/**"
-      - "gradle.properties"
-      - "settings.gradle.kts"
-      - "build.gradle.kts"
-      - ".github/workflows/ios.yml"
-
 permissions:
   contents: read
+
+concurrency:
+  group: ios-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   ios-compile:

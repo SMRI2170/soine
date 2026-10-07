@@ -1,5 +1,6 @@
 package app.soine.companion
 
+import kotlin.coroutines.startCoroutine
 import kotlin.test.*
 
 class BedtimeSignatureControllerTest {
@@ -56,6 +57,39 @@ class BedtimeSignatureControllerTest {
         assertEquals(CompanionIntent.MOVE_CLOSER, second.step.intent)
     }
 
+    @Test fun runnerWaitsForEachTimedStepAndEndsInBreathingState() {
+        val renderer = FakeCompanionRenderer()
+        val waits = mutableListOf<Long>()
+        val states = mutableListOf<BedtimeSignatureState>()
+        val runner = BedtimeSignatureRunner(
+            controller = BedtimeSignatureController(renderer),
+            wait = { millis -> waits += millis },
+        )
+
+        val result = runSuspend {
+            runner.run(CompanionRelationshipStage.CLOSE) { states += it }
+        }
+
+        assertEquals(listOf(600L, 900L, 900L, 500L), waits)
+        assertEquals(BedtimeSignatureSequence.steps.size, states.size)
+        assertEquals(CompanionIntent.BREATHE, result.step.intent)
+        assertTrue(result.quietUi)
+        assertTrue(result.completed)
+    }
+
+    @Test fun runnerCompletesEvenWhenRendererThrowsAtEveryStep() {
+        val runner = BedtimeSignatureRunner(
+            controller = BedtimeSignatureController(ThrowingRenderer()),
+            wait = {},
+        )
+
+        val result = runSuspend { runner.run() }
+
+        assertTrue(result.completed)
+        assertTrue(result.rendererFailed)
+        assertEquals(CompanionIntent.BREATHE, result.step.intent)
+    }
+
     @Test fun advancingCompletedSequenceIsIdempotent() {
         val renderer = FakeCompanionRenderer()
         val controller = BedtimeSignatureController(renderer)
@@ -67,6 +101,23 @@ class BedtimeSignatureControllerTest {
 
         assertTrue(again.completed)
         assertEquals(count, renderer.submittedRequests.size)
+    }
+
+    private fun <T> runSuspend(block: suspend () -> T): T {
+        var outcome: Result<T>? = null
+        block.startCoroutine(
+            object : kotlin.coroutines.Continuation<T> {
+                override val context: kotlin.coroutines.CoroutineContext =
+                    kotlin.coroutines.EmptyCoroutineContext
+
+                override fun resumeWith(result: Result<T>) {
+                    outcome = result
+                }
+            }
+        )
+        return checkNotNull(outcome) {
+            "Test coroutine suspended unexpectedly; this helper only supports synchronous suspend code."
+        }.getOrThrow()
     }
 
     private class ThrowingRenderer : CompanionRenderer {

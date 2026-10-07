@@ -86,3 +86,26 @@ class BedtimeSignatureController(
         return next.copy(rendererFailed = next.rendererFailed || result.isFailure)
     }
 }
+
+
+class BedtimeSignatureRunner(
+    private val controller: BedtimeSignatureController,
+    private val wait: suspend (Long) -> Unit,
+) {
+    suspend fun run(
+        relationshipStage: CompanionRelationshipStage = CompanionRelationshipStage.NEW,
+        onState: (BedtimeSignatureState) -> Unit = {},
+    ): BedtimeSignatureState {
+        var current = controller.start(relationshipStage)
+        onState(current)
+
+        while (!current.completed) {
+            if (current.step.minimumDurationMillis > 0L) {
+                wait(current.step.minimumDurationMillis)
+            }
+            current = controller.advance()
+            onState(current)
+        }
+        return current
+    }
+}

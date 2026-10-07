@@ -89,3 +89,20 @@ Avoid:
 - rewarding excessive sleep duration
 - notifications designed to create anxiety
 - pretending phone-only inference is medical truth
+
+
+## Bedtime signature integration
+
+After the sleep session has been persisted successfully, Soine starts the companion signature independently:
+
+1. LOOK_AT_USER
+2. MOVE_CLOSER
+3. CURL_UP
+4. SLEEP
+5. BREATHE
+
+The semantic sequence is renderer-neutral and uses the relationship stage for placement. The shared UI mirrors the current semantic intent while a platform renderer may render the same request.
+
+The final BREATHE state marks the UI as quiet. Nonessential session labels are suppressed, while essential wake and audio/timer controls remain available.
+
+The sleep session is created before this sequence starts. Renderer submission failures are swallowed by BedtimeSignatureController, so 3D/animation failure cannot roll back or block the active sleep session. Waking or deleting local data cancels an in-flight signature job.
