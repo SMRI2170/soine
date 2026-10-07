@@ -3,7 +3,6 @@ package app.soine.sound
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
 
 class SoundEventTest {
 
@@ -40,20 +39,6 @@ class SoundEventTest {
         assertFailsWith<IllegalArgumentException> {
             event(modelVersion = " ")
         }
-    }
-
-    @Test
-    fun modelHasNoRawAudioReference() {
-        val propertyNames = listOf(
-            "type",
-            "occurredAtEpochMillis",
-            "confidence",
-            "source",
-            "modelVersion",
-        )
-
-        assertFalse(propertyNames.any { it.contains("audioPath", ignoreCase = true) })
-        assertFalse(propertyNames.any { it.contains("recording", ignoreCase = true) })
     }
 
     private fun event(
