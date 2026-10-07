@@ -15,6 +15,7 @@ import app.soine.privacy.LocalDataDeletionService
 import app.soine.relationship.CompanionProgressRepository
 import app.soine.sleep.SleepSessionRepository
 import app.soine.sleep.currentTimeMillis
+import app.soine.sound.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -32,6 +33,8 @@ fun SoineApp(
     ambientAudioController: AmbientAudioController,
     dreamDiscoveryRepository: DreamDiscoveryRepository,
     companionProgressRepository: CompanionProgressRepository,
+    microphonePermissionController: MicrophonePermissionController,
+    soundAnalysisPreferencesStore: SoundAnalysisPreferencesStore,
     appVersion: String = "0.1.0",
 ) {
     val controller = remember(repository) { BedtimeFlowController(repository) }
@@ -53,10 +56,38 @@ fun SoineApp(
     var deletionResult by remember { mutableStateOf<LocalDataDeletionResult?>(null) }
     var dreamDiscoveries by remember { mutableStateOf<List<DreamDiscovery>>(emptyList()) }
     var nightMemoryEntries by remember { mutableStateOf<List<NightMemoryEntry>>(emptyList()) }
+    var microphonePermissionState by remember(microphonePermissionController) {
+        mutableStateOf(microphonePermissionController.state)
+    }
+    var soundAnalysisPreferences by remember(soundAnalysisPreferencesStore) {
+        mutableStateOf(soundAnalysisPreferencesStore.read())
+    }
+    var pendingSoundAnalysisEnable by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     DisposableEffect(ambientAudioController) {
         val subscription = ambientAudioController.observe { playbackState = it }
+        onDispose { subscription.close() }
+    }
+
+    DisposableEffect(microphonePermissionController, soundAnalysisPreferencesStore) {
+        val subscription = microphonePermissionController.observe { next ->
+            microphonePermissionState = next
+
+            if (next == MicrophonePermissionState.GRANTED && pendingSoundAnalysisEnable) {
+                val enabled = SoundAnalysisPreferences(enabled = true)
+                soundAnalysisPreferencesStore.write(enabled)
+                soundAnalysisPreferences = enabled
+                pendingSoundAnalysisEnable = false
+            } else if (next != MicrophonePermissionState.GRANTED) {
+                pendingSoundAnalysisEnable = false
+                if (soundAnalysisPreferences.enabled) {
+                    val disabled = SoundAnalysisPreferences(enabled = false)
+                    soundAnalysisPreferencesStore.write(disabled)
+                    soundAnalysisPreferences = disabled
+                }
+            }
+        }
         onDispose { subscription.close() }
     }
 
@@ -124,6 +155,8 @@ fun SoineApp(
             SecondaryScreen.SETTINGS -> SettingsScreen(
                 preferences = audioPreferences,
                 appVersion = appVersion,
+                soundAnalysisEnabled = soundAnalysisPreferences.enabled,
+                microphonePermissionState = microphonePermissionState,
                 onSoundSelected = { soundId ->
                     persistAudioPreferences(audioPreferences.copy(soundId = soundId))
                 },
@@ -135,6 +168,23 @@ fun SoineApp(
                 },
                 onTimerPresetSelected = { preset: SleepTimerPreset? ->
                     persistAudioPreferences(audioPreferences.copy(timerPreset = preset))
+                },
+                onSoundAnalysisEnabledChanged = { enabled ->
+                    pendingSoundAnalysisEnable = false
+                    val next = SoundAnalysisPreferences(
+                        enabled = enabled &&
+                            microphonePermissionState == MicrophonePermissionState.GRANTED,
+                    )
+                    soundAnalysisPreferencesStore.write(next)
+                    soundAnalysisPreferences = next
+                },
+                onRequestMicrophonePermission = {
+                    pendingSoundAnalysisEnable = true
+                    microphonePermissionController.requestPermission()
+                },
+                onOpenMicrophoneSettings = {
+                    pendingSoundAnalysisEnable = true
+                    microphonePermissionController.openAppSettings()
                 },
                 onPrivacyData = {
                     deletionResult = null
@@ -153,6 +203,8 @@ fun SoineApp(
                             if (result == LocalDataDeletionResult.Deleted) {
                                 audioCoordinator.endNight()
                                 audioPreferences = audioPreferencesStore.read()
+                                soundAnalysisPreferences = soundAnalysisPreferencesStore.read()
+                                pendingSoundAnalysisEnable = false
                                 dreamDiscoveries = emptyList()
                                 nightMemoryEntries = emptyList()
                                 destination = BedtimeDestination.Bedtime
@@ -215,7 +267,10 @@ fun SoineApp(
                 },
                 onRetry = { scope.launch { destination = controller.initialDestination() } },
                 onOpenDreamAlbum = { secondaryScreen = SecondaryScreen.DREAM_ALBUM },
-                onOpenSettings = { secondaryScreen = SecondaryScreen.SETTINGS },
+                onOpenSettings = {
+                    microphonePermissionController.refresh()
+                    secondaryScreen = SecondaryScreen.SETTINGS
+                },
                 nightMemoryEntries = nightMemoryEntries,
                 ambientSoundLabel = ambientLabel,
                 defaultTimerLabel = defaultTimerLabel,
