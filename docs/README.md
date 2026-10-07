@@ -40,8 +40,10 @@ Start here when implementing Soine.
 - android-sound-detection.md — Android microphone foreground-service spike and field-test plan
 - analytics-plan.md — validation metrics
 - testing-strategy.md — release quality
+- ios-target-matrix.md — iOS architecture target list (current vs parent commit)
 - store-listing-facts.md — bundle IDs, permissions, capabilities, privacy copy inputs ([#181][issue-181])
 - quality-epic-status.md — closure summary for the quality hardening EPIC ([#183][issue-183])
+- ci-quality-policy.md — CI lint / static-analysis / UI-smoke gate policy ([#193][issue-193])
 
 ## Decisions
 - decisions/0001-kmp-app-shell.md
@@ -54,3 +56,4 @@ Start here when implementing Soine.
 [issue-182]: https://github.com/SMRI2170/soine/issues/182
 [issue-181]: https://github.com/SMRI2170/soine/issues/181
 [issue-183]: https://github.com/SMRI2170/soine/issues/183
+[issue-193]: https://github.com/SMRI2170/soine/issues/193
