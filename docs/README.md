@@ -24,6 +24,7 @@ Start here when implementing Soine.
 - 3d-plan.md — renderer PoC
 - privacy.md — permissions/data handling
 - health-data-contract.md — normalized Health sleep-data boundary
+- sound-event-model.md — derived overnight sound-event contract
 - analytics-plan.md — validation metrics
 - testing-strategy.md — release quality
 
