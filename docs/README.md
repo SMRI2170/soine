@@ -26,6 +26,7 @@ Start here when implementing Soine.
 - microphone-permission-ux.md — opt-in microphone permission flow
 - health-data-contract.md — normalized Health sleep-data boundary
 - android-health-connect.md — Android Health Connect sleep adapter
+- ios-healthkit.md — iOS HealthKit sleep adapter
 - accessibility.md — core-flow accessibility and reduce-motion baseline
 - sound-event-model.md — derived overnight sound-event contract
 - analytics-plan.md — validation metrics

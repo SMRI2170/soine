@@ -75,6 +75,9 @@ class AndroidHealthConnectSleepDataSource(
             HealthPermissionState.DENIED ->
                 SleepSignalReadResult.PermissionDenied
 
+            HealthPermissionState.READ_STATUS_UNKNOWN ->
+                SleepSignalReadResult.PermissionRequired
+
             HealthPermissionState.UNAVAILABLE ->
                 SleepSignalReadResult.Unavailable
 

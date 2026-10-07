@@ -66,6 +66,31 @@ class PlatformSleepNormalizerTest {
     }
 
     @Test
+    fun healthKitInBedFixtureKeepsProviderAndSource() {
+        val signals = normalizePlatformSleepRecord(
+            record = PlatformSleepRecord(
+                startEpochMillis = 30_000,
+                endEpochMillis = 40_000,
+                sourceId = "com.apple.health",
+                sourceName = "Health",
+                stages = listOf(
+                    PlatformSleepStage(
+                        startEpochMillis = 30_000,
+                        endEpochMillis = 40_000,
+                        type = SleepSignalType.IN_BED,
+                    ),
+                ),
+            ),
+            provider = SleepSignalProvider.HEALTH_KIT,
+        )
+
+        assertEquals(SleepSignalType.IN_BED, signals.single().type)
+        assertEquals(SleepSignalProvider.HEALTH_KIT, signals.single().source.provider)
+        assertEquals("com.apple.health", signals.single().source.sourceId)
+        assertEquals("Health", signals.single().source.sourceName)
+    }
+
+    @Test
     fun invalidSessionProducesNoSignal() {
         val signals = normalizePlatformSleepRecord(
             record = PlatformSleepRecord(

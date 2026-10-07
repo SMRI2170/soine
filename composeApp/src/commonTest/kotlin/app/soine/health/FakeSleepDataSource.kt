@@ -39,7 +39,8 @@ internal class FakeSleepDataSource(
             HealthPermissionState.UNAVAILABLE ->
                 SleepSignalReadResult.Unavailable
 
-            HealthPermissionState.GRANTED ->
+            HealthPermissionState.GRANTED,
+            HealthPermissionState.READ_STATUS_UNKNOWN ->
                 SleepSignalReadResult.Available(
                     signals = signals.filter { signal ->
                         signal.endEpochMillis > startEpochMillis &&
