@@ -47,6 +47,7 @@ fun SoineApp(
     companionRenderer: CompanionRenderer = NoOpCompanionRenderer,
     microphonePermissionController: MicrophonePermissionController,
     soundAnalysisPreferencesStore: SoundAnalysisPreferencesStore,
+    soundEventRepository: SoundEventRepository,
     appVersion: String = "0.1.0",
 ) {
     val controller = remember(repository) { BedtimeFlowController(repository) }
@@ -86,6 +87,9 @@ fun SoineApp(
         mutableStateOf(soundAnalysisPreferencesStore.read())
     }
     var pendingSoundAnalysisEnable by remember { mutableStateOf(false) }
+    var soundEventSessions by remember { mutableStateOf<List<SoundEventSessionSummary>>(emptyList()) }
+    var deletingSoundEvents by remember { mutableStateOf(false) }
+    var soundDeletionMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
     DisposableEffect(ambientAudioController) {
@@ -212,13 +216,67 @@ fun SoineApp(
                 },
                 onPrivacyData = {
                     deletionResult = null
+                    soundDeletionMessage = null
                     secondaryScreen = SecondaryScreen.PRIVACY_DATA
+                    scope.launch {
+                        soundEventSessions = runCatching {
+                            soundEventRepository.getAll().sessionSummaries()
+                        }.getOrDefault(emptyList())
+                    }
                 },
                 onBack = { secondaryScreen = null },
             )
             SecondaryScreen.PRIVACY_DATA -> PrivacyDataScreen(
                 deleting = deletingLocalData,
                 deletionResult = deletionResult,
+                soundEventSessions = soundEventSessions,
+                deletingSoundEvents = deletingSoundEvents,
+                soundDeletionMessage = soundDeletionMessage,
+                onDeleteSoundSession = { sessionId ->
+                    if (!deletingSoundEvents) {
+                        scope.launch {
+                            deletingSoundEvents = true
+                            val result = runCatching {
+                                soundEventRepository.deleteSession(sessionId)
+                            }
+                            soundDeletionMessage = result.fold(
+                                onSuccess = { count ->
+                                    if (count > 0) count.toString() + "件の音イベントを削除しました。"
+                                    else "削除対象の音イベントはありませんでした。"
+                                },
+                                onFailure = {
+                                    "音イベントを削除できませんでした。もう一度お試しください。"
+                                },
+                            )
+                            soundEventSessions = runCatching {
+                                soundEventRepository.getAll().sessionSummaries()
+                            }.getOrDefault(soundEventSessions)
+                            deletingSoundEvents = false
+                        }
+                    }
+                },
+                onDeleteAllSoundEvents = {
+                    if (!deletingSoundEvents) {
+                        scope.launch {
+                            deletingSoundEvents = true
+                            val result = runCatching { soundEventRepository.deleteAll() }
+                            soundDeletionMessage = result.fold(
+                                onSuccess = { count ->
+                                    if (count > 0) count.toString() + "件の音イベントをすべて削除しました。"
+                                    else "保存された音イベントはありませんでした。"
+                                },
+                                onFailure = {
+                                    "音イベントを削除できませんでした。もう一度お試しください。"
+                                },
+                            )
+                            soundEventSessions = runCatching {
+                                soundEventRepository.getAll().sessionSummaries()
+                            }.getOrDefault(soundEventSessions)
+                            deletingSoundEvents = false
+                        }
+                    }
+                },
+                onDismissSoundDeletionMessage = { soundDeletionMessage = null },
                 onDeleteAll = {
                     if (!deletingLocalData) {
                         scope.launch {
@@ -229,6 +287,8 @@ fun SoineApp(
                                 audioPreferences = audioPreferencesStore.read()
                                 soundAnalysisPreferences = soundAnalysisPreferencesStore.read()
                                 pendingSoundAnalysisEnable = false
+                                soundEventSessions = emptyList()
+                                soundDeletionMessage = null
                                 dreamDiscoveries = emptyList()
                                 nightMemoryEntries = emptyList()
                                 bedtimeSignatureJob?.cancel()
@@ -244,6 +304,7 @@ fun SoineApp(
                 onDismissDeletionResult = { deletionResult = null },
                 onBack = {
                     deletionResult = null
+                    soundDeletionMessage = null
                     secondaryScreen = SecondaryScreen.SETTINGS
                 },
             )
