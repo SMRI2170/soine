@@ -83,6 +83,20 @@ class SleepDataSourceTest {
     }
 
     @Test
+    fun privacyPreservingReadStatusCanStillAttemptARead() = runHealthTest {
+        val expected = signal()
+        val source = FakeSleepDataSource(
+            permissionState = HealthPermissionState.READ_STATUS_UNKNOWN,
+            signals = listOf(expected),
+        )
+
+        val result = source.readSleepSignals(500, 2_500)
+
+        val available = assertIs<SleepSignalReadResult.Available>(result)
+        assertEquals(listOf(expected), available.signals)
+    }
+
+    @Test
     fun permissionRequestIsObservableInFake() = runHealthTest {
         val source = FakeSleepDataSource(
             permissionState = HealthPermissionState.GRANTED,

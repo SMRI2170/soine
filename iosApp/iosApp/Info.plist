@@ -12,7 +12,11 @@
     <string>0.1.0</string>
     <key>CFBundleVersion</key>
     <string>1</string>
-    <key>NSMicrophoneUsageDescription</key>\n    <string>寝言や大きな音など、夜の音イベントを端末内で見つけるために使います。</string>\n    <key>UILaunchScreen</key>
+    <key>NSHealthShareUsageDescription</key>
+    <string>Apple Healthの睡眠データを、Soineの睡眠記録を補助するために読み取ります。</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>寝言や大きな音など、夜の音イベントを端末内で見つけるために使います。</string>
+    <key>UILaunchScreen</key>
     <dict/>
     <key>UIBackgroundModes</key>
     <array>

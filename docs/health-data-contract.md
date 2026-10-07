@@ -10,7 +10,8 @@ sleep-session lifecycle.
 - `SleepSignal` with a start/end interval and normalized type
 - `SleepSignalSource` provenance
 - optional confidence in the `0.0..1.0` range
-- `HealthPermissionState`
+- `HealthPermissionState`, including `READ_STATUS_UNKNOWN` for platforms
+  such as HealthKit that intentionally hide read-grant status
 - explicit read results for permission-required, denied and unavailable states
 
 No Health Connect or HealthKit SDK type may cross this boundary.

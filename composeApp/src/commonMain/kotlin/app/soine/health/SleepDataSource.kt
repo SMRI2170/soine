@@ -52,6 +52,14 @@ enum class HealthPermissionState {
     NOT_REQUESTED,
     GRANTED,
     DENIED,
+
+    /**
+     * The platform completed the read authorization flow but intentionally
+     * does not reveal whether read access was granted. HealthKit uses this
+     * state for privacy-preserving read authorization.
+     */
+    READ_STATUS_UNKNOWN,
+
     UNAVAILABLE,
 }
 
