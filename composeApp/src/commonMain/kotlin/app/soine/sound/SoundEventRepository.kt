@@ -24,6 +24,7 @@ data class SoundEventSessionSummary(
 interface SoundEventRepository {
     suspend fun getAll(): List<StoredSoundEvent>
     suspend fun replaceSessionEvents(sessionId: String, events: List<SoundEvent>)
+    suspend fun appendSessionEvents(sessionId: String, events: List<SoundEvent>)
     suspend fun deleteSession(sessionId: String): Int
     suspend fun deleteAll(): Int?
 }
@@ -53,6 +54,18 @@ class StoredSoundEventRepository(
         } else {
             store.write(SoundEventSnapshotCodec.encode(next))
         }
+    }
+
+    override suspend fun appendSessionEvents(
+        sessionId: String,
+        events: List<SoundEvent>,
+    ) {
+        require(sessionId.isNotBlank()) { "Sound event session id must not be blank." }
+        if (events.isEmpty()) return
+
+        val current = getAll()
+        val next = current + events.map { StoredSoundEvent(sessionId, it) }
+        store.write(SoundEventSnapshotCodec.encode(next))
     }
 
     override suspend fun deleteSession(sessionId: String): Int {
