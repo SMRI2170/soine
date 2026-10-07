@@ -11,6 +11,10 @@ import app.soine.audio.AmbientAudioPreferences
 import app.soine.audio.AmbientSounds
 import app.soine.audio.SleepTimerPreset
 import app.soine.privacy.LocalDataDeletionResult
+import app.soine.sound.MicrophoneEnableAction
+import app.soine.sound.MicrophonePermissionCopy
+import app.soine.sound.MicrophonePermissionState
+import app.soine.sound.microphoneEnableAction
 
 @Composable
 fun SettingsScreen(
@@ -20,9 +24,17 @@ fun SettingsScreen(
     onMutedChanged: (Boolean) -> Unit,
     onVolumeChanged: (Float) -> Unit,
     onTimerPresetSelected: (SleepTimerPreset?) -> Unit,
+    soundAnalysisEnabled: Boolean,
+    microphonePermissionState: MicrophonePermissionState,
+    onSoundAnalysisEnabledChanged: (Boolean) -> Unit,
+    onRequestMicrophonePermission: () -> Unit,
+    onOpenMicrophoneSettings: () -> Unit,
     onPrivacyData: () -> Unit,
     onBack: () -> Unit,
 ) {
+    var showMicrophoneExplanation by remember { mutableStateOf(false) }
+    var showMicrophoneSettings by remember { mutableStateOf(false) }
+
     Column(
         Modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -97,7 +109,65 @@ fun SettingsScreen(
 
         SettingSection("連携") {
             SettingValueRow("Health", "未接続（任意）")
-            SettingValueRow("夜間の音解析", "オフ（任意）")
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("夜間の音解析")
+                    Text(
+                        when {
+                            soundAnalysisEnabled &&
+                                microphonePermissionState == MicrophonePermissionState.GRANTED ->
+                                "オン（端末内で解析）"
+
+                            microphonePermissionState == MicrophonePermissionState.PERMANENTLY_DENIED ->
+                                "マイク許可が必要です"
+
+                            microphonePermissionState == MicrophonePermissionState.UNAVAILABLE ->
+                                "この端末では利用できません"
+
+                            else ->
+                                "オフ（任意）"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                Switch(
+                    checked = soundAnalysisEnabled &&
+                        microphonePermissionState == MicrophonePermissionState.GRANTED,
+                    enabled = microphonePermissionState != MicrophonePermissionState.UNAVAILABLE,
+                    onCheckedChange = { checked ->
+                        if (!checked) {
+                            onSoundAnalysisEnabledChanged(false)
+                        } else {
+                            when (microphoneEnableAction(microphonePermissionState)) {
+                                MicrophoneEnableAction.ENABLE ->
+                                    onSoundAnalysisEnabledChanged(true)
+
+                                MicrophoneEnableAction.SHOW_PRE_PERMISSION ->
+                                    showMicrophoneExplanation = true
+
+                                MicrophoneEnableAction.OPEN_SETTINGS ->
+                                    showMicrophoneSettings = true
+
+                                MicrophoneEnableAction.UNAVAILABLE -> Unit
+                            }
+                        }
+                    },
+                )
+            }
+
+            if (
+                microphonePermissionState == MicrophonePermissionState.DENIED ||
+                microphonePermissionState == MicrophonePermissionState.PERMANENTLY_DENIED
+            ) {
+                Text(
+                    MicrophonePermissionCopy.DENIED,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
         }
 
         OutlinedButton(onClick = onPrivacyData, modifier = Modifier.fillMaxWidth()) {
@@ -106,6 +176,48 @@ fun SettingsScreen(
 
         Spacer(Modifier.weight(1f))
         Text("Soine v" + appVersion, style = MaterialTheme.typography.bodySmall)
+    }
+
+    if (showMicrophoneExplanation) {
+        AlertDialog(
+            onDismissRequest = { showMicrophoneExplanation = false },
+            title = { Text("夜間の音解析を使いますか？") },
+            text = { Text(MicrophonePermissionCopy.PRE_PERMISSION) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showMicrophoneExplanation = false
+                        onRequestMicrophonePermission()
+                    },
+                ) { Text("マイクを許可する") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMicrophoneExplanation = false }) {
+                    Text("今は使わない")
+                }
+            },
+        )
+    }
+
+    if (showMicrophoneSettings) {
+        AlertDialog(
+            onDismissRequest = { showMicrophoneSettings = false },
+            title = { Text("マイクの許可が必要です") },
+            text = { Text(MicrophonePermissionCopy.SETTINGS_REQUIRED) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showMicrophoneSettings = false
+                        onOpenMicrophoneSettings()
+                    },
+                ) { Text("端末の設定を開く") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMicrophoneSettings = false }) {
+                    Text("閉じる")
+                }
+            },
+        )
     }
 }
 
