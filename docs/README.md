@@ -23,6 +23,7 @@ Start here when implementing Soine.
 - dream-system.md — collectible dreams
 - 3d-plan.md — renderer PoC
 - privacy.md — permissions/data handling
+- health-data-contract.md — normalized Health sleep-data boundary
 - analytics-plan.md — validation metrics
 - testing-strategy.md — release quality
 
