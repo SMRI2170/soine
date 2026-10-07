@@ -1,6 +1,7 @@
 package app.soine.health
 
 import platform.Foundation.NSDate
+import platform.Foundation.NSSortDescriptor
 import platform.Foundation.timeIntervalSince1970
 import platform.HealthKit.HKAuthorizationRequestStatusUnnecessary
 import platform.HealthKit.HKCategorySample
@@ -17,6 +18,7 @@ import platform.HealthKit.HKObjectType
 import platform.HealthKit.HKQuery
 import platform.HealthKit.HKQueryOptionStrictStartDate
 import platform.HealthKit.HKSampleQuery
+import platform.HealthKit.HKSampleSortIdentifierEndDate
 import platform.HealthKit.HKSampleType
 import platform.HealthKit.predicateForSamplesWithStartDate
 import kotlin.coroutines.resume
@@ -115,7 +117,9 @@ class IosHealthKitSleepDataSource(
                     options = HKQueryOptionStrictStartDate,
                 ),
                 limit = HKObjectQueryNoLimit,
-                sortDescriptors = emptyList(),
+                sortDescriptors = listOf(
+                    NSSortDescriptor(HKSampleSortIdentifierEndDate, ascending = true),
+                ),
             ) { _, samples, error ->
                 if (error != null) {
                     continuation.resume(SleepSignalReadResult.Unavailable)
@@ -147,7 +151,7 @@ class IosHealthKitSleepDataSource(
                     PlatformSleepStage(
                         startEpochMillis = sample.startDate.toEpochMillis(),
                         endEpochMillis = sample.endDate.toEpochMillis(),
-                        type = sample.value.toSignalType(),
+                        type = sample.value.toInt().toSignalType(),
                     ),
                 ),
                 sourceId = source.bundleIdentifier,
@@ -158,7 +162,10 @@ class IosHealthKitSleepDataSource(
     }
 
     private fun Long.toNSDate(): NSDate =
-        NSDate.dateWithTimeIntervalSince1970(toDouble() / 1_000.0)
+        NSDate(
+            timeIntervalSinceReferenceDate =
+                toDouble() / 1_000.0 - SECONDS_FROM_1970_TO_REFERENCE_DATE,
+        )
 
     private fun NSDate.toEpochMillis(): Long =
         (timeIntervalSince1970 * 1_000.0).toLong()
@@ -188,4 +195,8 @@ class IosHealthKitSleepDataSource(
         } else {
             null
         }
+
+    companion object {
+        private const val SECONDS_FROM_1970_TO_REFERENCE_DATE = 978_307_200.0
+    }
 }
