@@ -1,0 +1,191 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "_comment": "Dependency update policy for the Soine repository. See docs/dependency-policy.md.",
+  "extends": [
+    "config:recommended",
+    ":automergeMinor",
+    ":automergePatch",
+    ":enableVulnerabilityAlerts"
+  ],
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "timezone": "Asia/Tokyo",
+  "prConcurrentLimit": 4,
+  "branchConcurrentLimit": 4,
+  "commitMessagePrefix": "deps:",
+  "semanticCommits": "enabled",
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "Soine dependency dashboard",
+  "osvVulnerabilityAlerts": {
+    "enabled": true
+  },
+  "packageRules": [
+    {
+      "description": "Kotlin language updates land on their own PR with platform version constraints surfaced.",
+      "matchDatasources": [
+        "maven",
+        "gradle"
+      ],
+      "matchPackageNames": [
+        "org.jetbrains.kotlin:kotlin-*",
+        "org.jetbrains.kotlinx:kotlinx-*"
+      ],
+      "matchDepTypes": [
+        "compile",
+        "runtime"
+      ],
+      "groupName": "Kotlin",
+      "groupSlug": "kotlin",
+      "separateMajorMinor": true,
+      "separateMultipleMajor": true,
+      "automerge": false,
+      "labels": [
+        "deps",
+        "kotlin"
+      ],
+      "commitMessageTopic": "kotlin",
+      "reviewers": []
+    },
+    {
+      "description": "Compose Multiplatform is updated independently so regressions are easy to bisect.",
+      "matchDatasources": [
+        "maven",
+        "gradle"
+      ],
+      "matchPackageNames": [
+        "org.jetbrains.compose:*",
+        "androidx.compose.*"
+      ],
+      "matchDepTypes": [
+        "compile",
+        "runtime"
+      ],
+      "groupName": "Compose",
+      "groupSlug": "compose",
+      "separateMajorMinor": true,
+      "separateMultipleMajor": true,
+      "automerge": false,
+      "labels": [
+        "deps",
+        "compose"
+      ],
+      "commitMessageTopic": "compose"
+    },
+    {
+      "description": "Android Gradle Plugin updates are isolated because they touch the whole build.",
+      "matchDatasources": [
+        "maven",
+        "gradle"
+      ],
+      "matchPackageNames": [
+        "com.android.application",
+        "com.android.kotlin.multiplatform.library",
+        "com.android.tools.build:*"
+      ],
+      "matchDepTypes": [
+        "plugin"
+      ],
+      "groupName": "AGP",
+      "groupSlug": "agp",
+      "separateMajorMinor": true,
+      "separateMultipleMajor": true,
+      "automerge": false,
+      "labels": [
+        "deps",
+        "agp"
+      ],
+      "commitMessageTopic": "agp"
+    },
+    {
+      "description": "AndroidX runtime libraries are reviewed by humans.",
+      "matchDatasources": [
+        "maven",
+        "gradle"
+      ],
+      "matchPackageNames": [
+        "androidx.*"
+      ],
+      "matchDepTypes": [
+        "compile",
+        "runtime"
+      ],
+      "groupName": "AndroidX",
+      "groupSlug": "androidx",
+      "separateMajorMinor": true,
+      "separateMultipleMajor": true,
+      "automerge": false,
+      "labels": [
+        "deps",
+        "androidx"
+      ],
+      "commitMessageTopic": "androidx"
+    },
+    {
+      "description": "Test-only dependencies can be batched and auto-merged for patch updates.",
+      "matchDatasources": [
+        "maven",
+        "gradle"
+      ],
+      "matchPackageNames": [
+        "org.jetbrains.kotlin:kotlin-test",
+        "org.jetbrains.kotlin:kotlin-test-junit",
+        "junit:junit",
+        "org.junit.jupiter:*"
+      ],
+      "matchDepTypes": [
+        "test"
+      ],
+      "groupName": "test deps",
+      "groupSlug": "test-deps",
+      "separateMajorMinor": false,
+      "separateMultipleMajor": true,
+      "patch": {
+        "automerge": true
+      },
+      "minor": {
+        "automerge": false
+      },
+      "labels": [
+        "deps",
+        "test"
+      ],
+      "commitMessageTopic": "test deps"
+    },
+    {
+      "description": "GitHub Actions are grouped per-action so each pin change is its own PR.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "separateMajorMinor": true,
+      "separateMultipleMajor": true,
+      "automerge": false,
+      "labels": [
+        "deps",
+        "github-actions"
+      ],
+      "commitMessageTopic": "actions"
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": [
+      "security",
+      "deps"
+    ],
+    "assignees": []
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "gradle/libs.versions.toml",
+        "gradle/verification-metadata.xml"
+      ],
+      "matchStrings": {
+        "version": "=\"(?<currentValue>\\d+(?:\\.\\d+)*(?:[-+][a-zA-Z0-9.-]+)?)\""
+      },
+      "datasourceTemplate": "maven"
+    }
+  ]
+}

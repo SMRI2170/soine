@@ -28,6 +28,7 @@ Start here when implementing Soine.
 - performance-budget.md — binary / runtime / memory / battery budget targets ([#184][issue-184])
 - asset-manifest.json — reference asset inventory for size-diff tracking ([#184][issue-184])
 - overnight-battery-benchmark.md — overnight battery measurement template
+- dependency-policy.md — add / update / remove policy and Renovate grouping ([#187][issue-187])
 - microphone-permission-ux.md — opt-in microphone permission flow
 - health-data-contract.md — normalized Health sleep-data boundary
 - health-merge-policy.md — manual session vs external Health precedence
@@ -46,3 +47,4 @@ Start here when implementing Soine.
 [issue-184]: https://github.com/SMRI2170/soine/issues/184
 [issue-185]: https://github.com/SMRI2170/soine/issues/185
 [issue-186]: https://github.com/SMRI2170/soine/issues/186
+[issue-187]: https://github.com/SMRI2170/soine/issues/187
