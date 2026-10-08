@@ -18,7 +18,7 @@ data class AnalyticsPreferences(
     val installId: String? = null,
 )
 
-fun interface AnalyticsPreferencesStore {
+interface AnalyticsPreferencesStore {
     fun read(): AnalyticsPreferences
     fun write(preferences: AnalyticsPreferences)
 }

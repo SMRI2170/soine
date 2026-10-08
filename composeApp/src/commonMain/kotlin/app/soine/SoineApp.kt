@@ -135,13 +135,14 @@ fun SoineApp(
     }
 
     LaunchedEffect(controller, dreamCoordinator) {
-        destination = controller.initialDestination()
-        if (destination is BedtimeDestination.Sleeping) {
+        val initialDestination = controller.initialDestination()
+        destination = initialDestination
+        if (initialDestination is BedtimeDestination.Sleeping) {
             audioCoordinator.recoverNight()
             refreshAudioPreferences()
-            analytics?.onSessionRecovered(destination.session.id)
+            analytics?.onSessionRecovered(initialDestination.session.id)
         }
-        analytics?.onDestinationReached(destination)
+        analytics?.onDestinationReached(initialDestination)
 
         try {
             repository.getCompletedSessions().firstOrNull()?.let { latest ->
