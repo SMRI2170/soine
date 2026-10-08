@@ -155,7 +155,7 @@ private fun BedtimeScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 56.dp)
-                .semantics { contentDescription = "睡眠を開始する" },
+                .semantics { contentDescription = AccessibilityPolicy.SLEEP_START_CONTENT_DESCRIPTION },
             shape = RoundedCornerShape(18.dp),
         ) { Text("一緒に寝る") }
     }
@@ -247,7 +247,7 @@ private fun SleepingScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 56.dp)
-                .semantics { contentDescription = "起床して朝の記録を見る" },
+                .semantics { contentDescription = AccessibilityPolicy.WAKE_CONTENT_DESCRIPTION },
             shape = RoundedCornerShape(18.dp),
         ) { Text("起きる") }
     }

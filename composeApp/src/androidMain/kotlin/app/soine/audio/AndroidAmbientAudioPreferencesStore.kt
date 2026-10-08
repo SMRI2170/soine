@@ -14,13 +14,13 @@ class AndroidAmbientAudioPreferencesStore(context: Context) : AmbientAudioPrefer
         muted = if (preferences.contains("muted")) preferences.getBoolean("muted", false) else null,
     )
 
-    override fun write(preferencesValue: AmbientAudioPreferences) {
-        check(preferences.edit()
-            .putString("sound_id", preferencesValue.soundId)
-            .putFloat("volume", preferencesValue.volume)
-            .apply { preferencesValue.timerPreset?.let { putString("timer_preset", it.name) } ?: remove("timer_preset") }
-            .apply { preferencesValue.timerStopAtEpochMillis?.let { putLong("timer_stop_at", it) } ?: remove("timer_stop_at") }
-            .putBoolean("muted", preferencesValue.muted)
+    override fun write(preferences: AmbientAudioPreferences) {
+        check(this.preferences.edit()
+            .putString("sound_id", preferences.soundId)
+            .putFloat("volume", preferences.volume)
+            .apply { preferences.timerPreset?.let { putString("timer_preset", it.name) } ?: remove("timer_preset") }
+            .apply { preferences.timerStopAtEpochMillis?.let { putLong("timer_stop_at", it) } ?: remove("timer_stop_at") }
+            .putBoolean("muted", preferences.muted)
             .commit()
         ) { "Failed to persist ambient audio preferences." }
     }

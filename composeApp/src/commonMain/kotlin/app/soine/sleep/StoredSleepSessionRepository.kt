@@ -155,7 +155,7 @@ internal object SleepSessionSnapshotCodec {
         require(completed.map { it.id }.distinct().size == completed.size) {
             "Duplicate completed session ids in snapshot."
         }
-        require(active == null || completed.none { it.id == active?.id }) {
+        require(active == null || completed.none { it.id == active.id }) {
             "Active session is also present in completed sessions."
         }
 

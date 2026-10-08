@@ -60,7 +60,7 @@ class IosAmbientAudioController(
         if (session.category != AVAudioSessionCategoryPlayAndRecord) {
             session.setCategory(AVAudioSessionCategoryPlayback, error = null)
         }
-        val created = AVAudioPlayer(contentsOfURL = url, error = null) ?: return
+        val created = AVAudioPlayer(contentsOfURL = url, error = null)
         created.numberOfLoops = if (sound.loop) -1 else 0
         created.volume = sound.defaultVolume
         created.prepareToPlay()
