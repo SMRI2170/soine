@@ -33,6 +33,10 @@ Start here when implementing Soine.
 - observability.md — privacy contract for crash / non-fatal diagnostics ([#188][issue-188])
 - analytics-vendor-selection.md — provider constraints and V1 selection framework ([#180][issue-180])
 - ios-ambient-audio-verification.md — iOS ambient audio physical-device scenarios ([#23][issue-23])
+- ios-target-matrix.md — iOS architecture target list (current vs parent commit)
+- store-listing-facts.md — bundle IDs, permissions, capabilities, privacy copy inputs ([#181][issue-181])
+- quality-epic-status.md — closure summary for the quality hardening EPIC ([#183][issue-183])
+- ci-quality-policy.md — CI lint / static-analysis / UI-smoke gate policy ([#193][issue-193])
 - microphone-permission-ux.md — opt-in microphone permission flow
 - health-data-contract.md — normalized Health sleep-data boundary
 - health-merge-policy.md — manual session vs external Health precedence
@@ -43,10 +47,6 @@ Start here when implementing Soine.
 - android-sound-detection.md — Android microphone foreground-service spike and field-test plan
 - analytics-plan.md — validation metrics
 - testing-strategy.md — release quality
-- ios-target-matrix.md — iOS architecture target list (current vs parent commit)
-- store-listing-facts.md — bundle IDs, permissions, capabilities, privacy copy inputs ([#181][issue-181])
-- quality-epic-status.md — closure summary for the quality hardening EPIC ([#183][issue-183])
-- ci-quality-policy.md — CI lint / static-analysis / UI-smoke gate policy ([#193][issue-193])
 
 ## Decisions
 - decisions/0001-kmp-app-shell.md
@@ -57,13 +57,9 @@ Start here when implementing Soine.
 [issue-186]: https://github.com/SMRI2170/soine/issues/186
 [issue-187]: https://github.com/SMRI2170/soine/issues/187
 [issue-182]: https://github.com/SMRI2170/soine/issues/182
-<<<<<<< HEAD
 [issue-181]: https://github.com/SMRI2170/soine/issues/181
 [issue-183]: https://github.com/SMRI2170/soine/issues/183
 [issue-193]: https://github.com/SMRI2170/soine/issues/193
 [issue-188]: https://github.com/SMRI2170/soine/issues/188
 [issue-180]: https://github.com/SMRI2170/soine/issues/180
 [issue-23]: https://github.com/SMRI2170/soine/issues/23
-=======
-[issue-181]: https://github.com/SMRI2170/soine/issues/181
->>>>>>> bf9766d (feat(release): add V1 store-listing technical facts sheet (#181))
