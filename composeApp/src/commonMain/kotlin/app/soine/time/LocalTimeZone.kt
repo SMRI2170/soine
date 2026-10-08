@@ -58,6 +58,8 @@ object UtcTimeZone : LocalTimeZone {
  * Tests swap this binding to exercise travel and DST scenarios.
  */
 object LocalTimeZones {
-    @Volatile
+    // KMP commonMain does not have @Volatile. The renderer is single-
+    // threaded (Compose UI dispatcher) and the binding is only mutated at
+    // app start. A plain var is sufficient.
     var current: LocalTimeZone = JapanLocalTimeZone
 }
