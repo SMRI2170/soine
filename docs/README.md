@@ -32,6 +32,7 @@ Start here when implementing Soine.
 - release-candidate-scenarios.md — 7-night RC scenarios, release blockers, acceptance criteria ([#182][issue-182])
 - observability.md — privacy contract for crash / non-fatal diagnostics ([#188][issue-188])
 - analytics-vendor-selection.md — provider constraints and V1 selection framework ([#180][issue-180])
+- ios-ambient-audio-verification.md — iOS ambient audio physical-device scenarios ([#23][issue-23])
 - microphone-permission-ux.md — opt-in microphone permission flow
 - health-data-contract.md — normalized Health sleep-data boundary
 - health-merge-policy.md — manual session vs external Health precedence
@@ -61,3 +62,4 @@ Start here when implementing Soine.
 [issue-193]: https://github.com/SMRI2170/soine/issues/193
 [issue-188]: https://github.com/SMRI2170/soine/issues/188
 [issue-180]: https://github.com/SMRI2170/soine/issues/180
+[issue-23]: https://github.com/SMRI2170/soine/issues/23
