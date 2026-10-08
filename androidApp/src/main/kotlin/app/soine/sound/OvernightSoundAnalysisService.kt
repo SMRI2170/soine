@@ -1,5 +1,6 @@
 package app.soine.sound
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -96,6 +97,7 @@ class OvernightSoundAnalysisService : Service() {
         }
 
         val record = try {
+            @SuppressLint("MissingPermission")
             AudioRecord(
                 MediaRecorder.AudioSource.VOICE_RECOGNITION,
                 SAMPLE_RATE_HZ,
