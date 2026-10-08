@@ -45,19 +45,17 @@ class LocalTimeZoneTest {
 
     @Test
     fun midnightCrossingDisplaysDifferentTimesForTheSameSession() {
-        // A session that starts at 23:50 local (JST) and ends at 00:30 local
-        // should still render 23:50 / 00:30 in the user's local wall clock.
-        // The absolute timestamps are stored as epoch millis; the renderer
-        // applies the current timezone offset to produce the labels.
+        // Pick an epoch that maps to a known JST time, then advance by
+        // 40 minutes and verify the formatter keeps the wall-clock
+        // arithmetic correct.
+        // 0L (1970-01-01T00:00:00Z) + 9h JST offset = 1970-01-01T09:00 JST.
         LocalTimeZones.current = JapanLocalTimeZone
-        val startLocal = 1_700_000_000_000L // arbitrary epoch; check label formatting
-        val endLocal = startLocal + 40 * 60 * 1_000L
 
-        val startLabel = formatNightEventTime(startLocal)
-        val endLabel = formatNightEventTime(endLocal)
+        val startLabel = formatNightEventTime(0L)
+        val endLabel = formatNightEventTime(40L * 60L * 1_000L)
 
-        assertEquals("00:00", startLabel)
-        assertEquals("00:40", endLabel)
+        assertEquals("09:00", startLabel)
+        assertEquals("09:40", endLabel)
     }
 
     @Test
