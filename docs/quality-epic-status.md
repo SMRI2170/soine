@@ -50,12 +50,14 @@ All seven principles above are satisfied. The EPIC does not block release.
 
 The following items were added to the issue tracker after the EPIC body was written and are **not** part of this closure:
 
-- [#196][issue-196] timezone / wall-clock correctness
-
 The originally-listed #193 (CI lint / static analysis / UI smoke test)
-was closed by the PR that shipped this epic; the canonical gate
-policy now lives in
-[`docs/ci-quality-policy.md`](./ci-quality-policy.md).
+and #196 (timezone / wall-clock correctness) have both been closed
+by separate PRs that extended the policy; the canonical documents
+are:
+
+- [`docs/ci-quality-policy.md`](./ci-quality-policy.md) — CI gates
+- [`docs/timezone.md`](./timezone.md) — absolute time,
+  LocalTimeZone / DisplayFormatter boundary, wall-clock safety
 
 [issue-183]: https://github.com/SMRI2170/soine/issues/183
 [issue-184]: https://github.com/SMRI2170/soine/issues/184

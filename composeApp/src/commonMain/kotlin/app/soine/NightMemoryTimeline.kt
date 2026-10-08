@@ -18,6 +18,7 @@ import app.soine.night.NightEventAnimationIntent
 import app.soine.night.NightEventType
 import app.soine.time.LocalTimeZone
 import app.soine.time.LocalTimeZones
+import app.soine.time.format.DisplayFormatters
 
 data class NightMemoryEntry(
     val eventId: String,
@@ -31,10 +32,10 @@ data class NightMemoryEntry(
 fun buildNightMemoryEntries(
     events: List<NightEvent>,
     maxEntries: Int = 3,
+    timeZone: LocalTimeZone = LocalTimeZones.current,
+    formatter: app.soine.time.format.DisplayFormatter = DisplayFormatters.current,
 ): List<NightMemoryEntry> {
     require(maxEntries in 0..3) { "Night-memory timeline supports at most three entries." }
-
-    val timeZone = LocalTimeZones.current
 
     return events
         .sortedWith(compareBy<NightEvent> { it.occurredAtEpochMillis }.thenBy { it.id })
@@ -43,7 +44,7 @@ fun buildNightMemoryEntries(
             NightMemoryEntry(
                 eventId = event.id,
                 occurredAtEpochMillis = event.occurredAtEpochMillis,
-                timeLabel = formatNightEventTime(event.occurredAtEpochMillis, timeZone),
+                timeLabel = formatter.formatNightEventTime(event.occurredAtEpochMillis, timeZone),
                 line = definition.morningLine,
                 artKey = definition.animationIntent.toArtKey(),
                 glyph = event.type.toTimelineGlyph(),
@@ -52,18 +53,19 @@ fun buildNightMemoryEntries(
         .take(maxEntries)
 }
 
+/**
+ * Format a night event's wall-clock time using the current
+ * [DisplayFormatters.current] and [LocalTimeZones.current] bindings.
+ *
+ * Kept as a top-level helper for tests and Compose previews that want
+ * a one-line call without passing a formatter. The actual formatting
+ * lives in [app.soine.time.format.JapaneseDisplayFormatter].
+ */
 fun formatNightEventTime(
     epochMillis: Long,
     timeZone: LocalTimeZone = LocalTimeZones.current,
-): String {
-    require(epochMillis >= 0L) { "NightEvent timestamp must not be negative." }
-    val localMillis = epochMillis + timeZone.utcOffsetMillisAt(epochMillis)
-    val millisOfDay = ((localMillis % MILLIS_PER_DAY) + MILLIS_PER_DAY) % MILLIS_PER_DAY
-    val hours = millisOfDay / MILLIS_PER_HOUR
-    val minutes = (millisOfDay % MILLIS_PER_HOUR) / MILLIS_PER_MINUTE
-    return hours.toString().padStart(2, '0') + ":" +
-        minutes.toString().padStart(2, '0')
-}
+): String =
+    DisplayFormatters.current.formatNightEventTime(epochMillis, timeZone)
 
 private fun NightEventAnimationIntent.toArtKey(): String =
     "night_event_" + name.lowercase()
@@ -78,10 +80,6 @@ private fun NightEventType.toTimelineGlyph(): String = when (this) {
     NightEventType.DREAM -> "◇"
     NightEventType.SOUND_REACTION -> "≋"
 }
-
-private const val MILLIS_PER_MINUTE = 60_000L
-private const val MILLIS_PER_HOUR = 60L * MILLIS_PER_MINUTE
-private const val MILLIS_PER_DAY = 24L * MILLIS_PER_HOUR
 
 @Composable
 fun NightMemoryTimeline(entries: List<NightMemoryEntry>) {

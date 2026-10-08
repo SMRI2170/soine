@@ -38,6 +38,8 @@ data class DreamAlbumEntry(
 fun buildDreamAlbumEntries(
     definitions: List<DreamDefinition>,
     discoveries: List<DreamDiscovery>,
+    timeZone: app.soine.time.LocalTimeZone = app.soine.time.LocalTimeZones.current,
+    formatter: app.soine.time.format.DisplayFormatter = app.soine.time.format.DisplayFormatters.current,
 ): List<DreamAlbumEntry> {
     val earliestDiscoveryByDreamId = discoveries
         .groupBy { it.dreamId }
@@ -64,7 +66,10 @@ fun buildDreamAlbumEntries(
                     shortLine = definition.shortLine,
                     rarityLabel = definition.rarity.toGentleLabel(),
                     discoveredAtEpochMillis = discovery.discoveredAtEpochMillis,
-                    discoveredDateLabel = formatJapaneseDiscoveryDate(discovery.discoveredAtEpochMillis),
+                    discoveredDateLabel = formatter.formatDiscoveryDate(
+                        discovery.discoveredAtEpochMillis,
+                        timeZone,
+                    ),
                 )
             }
         }
@@ -81,40 +86,18 @@ private fun RarityBand.toGentleLabel(): String = when (this) {
     RarityBand.RARE -> "めずらしい夢"
 }
 
+/**
+ * Format a discovery's wall-clock date in the current locale style.
+ *
+ * V1 calls into [app.soine.time.format.JapaneseDisplayFormatter];
+ * future locales swap [app.soine.time.format.DisplayFormatters.current]
+ * to add a new style without touching call sites.
+ */
 fun formatJapaneseDiscoveryDate(
     epochMillis: Long,
     timeZone: app.soine.time.LocalTimeZone = app.soine.time.LocalTimeZones.current,
-): String {
-    require(epochMillis >= 0L) { "Discovery timestamp must not be negative." }
-
-    val localMillis = epochMillis + timeZone.utcOffsetMillisAt(epochMillis)
-    val epochDay = localMillis / MILLIS_PER_DAY
-    val date = civilDateFromEpochDay(epochDay)
-    return date.year.toString() + "年" + date.month + "月" + date.day + "日"
-}
-
-private data class CivilDate(
-    val year: Int,
-    val month: Int,
-    val day: Int,
-)
-
-private fun civilDateFromEpochDay(epochDay: Long): CivilDate {
-    val z = epochDay + 719_468L
-    val era = if (z >= 0L) z / 146_097L else (z - 146_096L) / 146_097L
-    val dayOfEra = z - era * 146_097L
-    val yearOfEra =
-        (dayOfEra - dayOfEra / 1_460L + dayOfEra / 36_524L - dayOfEra / 146_096L) / 365L
-    var year = (yearOfEra + era * 400L).toInt()
-    val dayOfYear = dayOfEra - (365L * yearOfEra + yearOfEra / 4L - yearOfEra / 100L)
-    val monthPrime = (5L * dayOfYear + 2L) / 153L
-    val day = (dayOfYear - (153L * monthPrime + 2L) / 5L + 1L).toInt()
-    val month = (monthPrime + if (monthPrime < 10L) 3L else -9L).toInt()
-    year += if (month <= 2) 1 else 0
-    return CivilDate(year, month, day)
-}
-
-private const val MILLIS_PER_DAY = 86_400_000L
+): String =
+    app.soine.time.format.DisplayFormatters.current.formatDiscoveryDate(epochMillis, timeZone)
 
 @Composable
 fun DreamAlbumScreen(
