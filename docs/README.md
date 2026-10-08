@@ -47,6 +47,7 @@ Start here when implementing Soine.
 - android-sound-detection.md — Android microphone foreground-service spike and field-test plan
 - analytics-plan.md — validation metrics
 - testing-strategy.md — release quality
+- timezone.md — absolute time, LocalTimeZone / DisplayFormatter boundary, wall-clock safety ([#196][issue-196])
 
 ## Decisions
 - decisions/0001-kmp-app-shell.md
@@ -60,6 +61,7 @@ Start here when implementing Soine.
 [issue-181]: https://github.com/SMRI2170/soine/issues/181
 [issue-183]: https://github.com/SMRI2170/soine/issues/183
 [issue-193]: https://github.com/SMRI2170/soine/issues/193
+[issue-196]: https://github.com/SMRI2170/soine/issues/196
 [issue-188]: https://github.com/SMRI2170/soine/issues/188
 [issue-180]: https://github.com/SMRI2170/soine/issues/180
 [issue-23]: https://github.com/SMRI2170/soine/issues/23

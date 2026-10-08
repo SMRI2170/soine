@@ -8,7 +8,12 @@ data class SleepSession(
     val endedAtEpochMillis: Long? = null,
 ) {
     fun start(now: Long = currentTimeMillis()): SleepSession =
-        copy(state = SleepState.SLEEPING, startedAtEpochMillis = now, endedAtEpochMillis = null)
+        // Only the READY state can transition to SLEEPING. Calling
+        // start on an in-flight or finished session is a no-op so a
+        // stray CTA tap (e.g. one triggered by a timezone-change
+        // re-render) cannot reset the persisted record.
+        if (state != SleepState.READY) this
+        else copy(state = SleepState.SLEEPING, startedAtEpochMillis = now, endedAtEpochMillis = null)
 
     fun finish(now: Long = currentTimeMillis()): SleepSession =
         if (state != SleepState.SLEEPING) this
