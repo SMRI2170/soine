@@ -60,8 +60,8 @@ class NightMemoryTimelineTest {
 
     @Test
     fun japaneseClockLabelUsesJst() {
-        assertEquals("09:00", formatJapaneseNightEventTime(0L))
-        assertEquals("00:30", formatJapaneseNightEventTime(55_800_000L))
+        assertEquals("09:00", formatNightEventTime(0L))
+        assertEquals("00:30", formatNightEventTime(55_800_000L))
     }
 
     @Test
