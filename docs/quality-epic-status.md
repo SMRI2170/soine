@@ -50,10 +50,12 @@ All seven principles above are satisfied. The EPIC does not block release.
 
 The following items were added to the issue tracker after the EPIC body was written and are **not** part of this closure:
 
-- [#193][issue-193] CI lint / static analysis / UI smoke test
 - [#196][issue-196] timezone / wall-clock correctness
 
-Each is tracked independently and remains open.
+The originally-listed #193 (CI lint / static analysis / UI smoke test)
+was closed by the PR that shipped this epic; the canonical gate
+policy now lives in
+[`docs/ci-quality-policy.md`](./ci-quality-policy.md).
 
 [issue-183]: https://github.com/SMRI2170/soine/issues/183
 [issue-184]: https://github.com/SMRI2170/soine/issues/184

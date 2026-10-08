@@ -13,10 +13,10 @@ class AndroidSoundAnalysisPreferencesStore(
             enabled = preferences.getBoolean("enabled", false),
         )
 
-    override fun write(preferencesValue: SoundAnalysisPreferences) {
+    override fun write(preferences: SoundAnalysisPreferences) {
         check(
-            preferences.edit()
-                .putBoolean("enabled", preferencesValue.enabled)
+            this.preferences.edit()
+                .putBoolean("enabled", preferences.enabled)
                 .commit()
         ) { "Failed to persist sound-analysis preferences." }
     }

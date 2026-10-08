@@ -18,6 +18,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             isDebuggable = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -27,6 +28,16 @@ android {
         debug {
             isDebuggable = true
         }
+    }
+
+    lint {
+        baseline = file("lint-baseline.xml")
+        abortOnError = true
+        warningsAsErrors = false
+        checkAllWarnings = false
+        // V1 baseline: the team must shrink this file every time a warning
+        // is fixed. New warnings (not present in the baseline) fail the PR.
+        // See docs/ci-quality-policy.md for the gate policy.
     }
 }
 
