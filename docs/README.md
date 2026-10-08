@@ -57,9 +57,13 @@ Start here when implementing Soine.
 [issue-186]: https://github.com/SMRI2170/soine/issues/186
 [issue-187]: https://github.com/SMRI2170/soine/issues/187
 [issue-182]: https://github.com/SMRI2170/soine/issues/182
+<<<<<<< HEAD
 [issue-181]: https://github.com/SMRI2170/soine/issues/181
 [issue-183]: https://github.com/SMRI2170/soine/issues/183
 [issue-193]: https://github.com/SMRI2170/soine/issues/193
 [issue-188]: https://github.com/SMRI2170/soine/issues/188
 [issue-180]: https://github.com/SMRI2170/soine/issues/180
 [issue-23]: https://github.com/SMRI2170/soine/issues/23
+=======
+[issue-181]: https://github.com/SMRI2170/soine/issues/181
+>>>>>>> bf9766d (feat(release): add V1 store-listing technical facts sheet (#181))
