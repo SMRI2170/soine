@@ -50,12 +50,13 @@ All seven principles above are satisfied. The EPIC does not block release.
 
 The following items were added to the issue tracker after the EPIC body was written and are **not** part of this closure:
 
-The originally-listed #193 (CI lint / static analysis / UI smoke test)
-and #196 (timezone / wall-clock correctness) have both been closed
-by separate PRs that extended the policy; the canonical documents
-are:
+The originally-listed #193 (CI lint / static analysis / UI smoke test),
+#195 (accessibility re-audit), and #196 (timezone / wall-clock
+correctness) have all been closed by separate PRs that extended
+the policy; the canonical documents are:
 
 - [`docs/ci-quality-policy.md`](./ci-quality-policy.md) — CI gates
+- [`docs/accessibility-audit-2026-10.md`](./accessibility-audit-2026-10.md) — V1 accessibility audit
 - [`docs/timezone.md`](./timezone.md) — absolute time,
   LocalTimeZone / DisplayFormatter boundary, wall-clock safety
 
