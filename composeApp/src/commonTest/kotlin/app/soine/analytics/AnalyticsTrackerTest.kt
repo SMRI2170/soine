@@ -16,6 +16,11 @@ class AnalyticsTrackerTest {
                 "morning_summary_viewed",
                 "night_memory_opened",
                 "dream_discovered",
+                "onboarding_started",
+                "onboarding_step_viewed",
+                "onboarding_completed",
+                "onboarding_skipped",
+                "onboarding_replayed",
             ),
             AnalyticsEvent.entries.map { it.eventName },
         )

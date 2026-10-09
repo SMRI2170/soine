@@ -6,6 +6,7 @@ import app.soine.audio.IosAmbientAudioController
 import app.soine.audio.IosAmbientAudioPreferencesStore
 import app.soine.dream.IosDreamDiscoveryStore
 import app.soine.dream.StoredDreamDiscoveryRepository
+import app.soine.onboarding.IosFirstRunRepository
 import app.soine.privacy.LocalDataClearer
 import app.soine.privacy.LocalDataDeletionService
 import app.soine.relationship.IosRelationshipStateStore
@@ -40,6 +41,7 @@ fun MainViewController() = ComposeUIViewController {
             else -> null
         }
     }
+    val firstRunRepository = IosFirstRunRepository()
     val deletionService = LocalDataDeletionService(
         repository = repository,
         clearers = listOf(
@@ -49,6 +51,7 @@ fun MainViewController() = ComposeUIViewController {
             LocalDataClearer { soundEventStore.clear() },
             LocalDataClearer { relationshipStore.clear() },
             LocalDataClearer { dreamStore.clear() },
+            LocalDataClearer { firstRunRepository.resetForReplay() },
         ),
     )
     SoineApp(
@@ -63,5 +66,6 @@ fun MainViewController() = ComposeUIViewController {
         soundAnalysisPreferencesStore = soundAnalysisPreferences,
         soundEventRepository = soundEventRepository,
         overnightSoundAnalysisController = overnightSoundAnalysisController,
+        firstRunRepository = firstRunRepository,
     )
 }

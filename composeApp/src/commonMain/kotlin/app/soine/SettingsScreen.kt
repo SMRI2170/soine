@@ -7,8 +7,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import app.soine.accessibility.AccessibilityPolicy
 import app.soine.audio.AmbientAudioPreferences
 import app.soine.audio.AmbientSounds
 import app.soine.audio.SleepTimerPreset
@@ -33,6 +36,7 @@ fun SettingsScreen(
     onRequestMicrophonePermission: () -> Unit,
     onOpenMicrophoneSettings: () -> Unit,
     onPrivacyData: () -> Unit,
+    onReplayOnboarding: () -> Unit,
     onBack: () -> Unit,
 ) {
     var showMicrophoneExplanation by remember { mutableStateOf(false) }
@@ -175,6 +179,18 @@ fun SettingsScreen(
 
         OutlinedButton(onClick = onPrivacyData, modifier = Modifier.fillMaxWidth()) {
             Text("プライバシーとデータ")
+        }
+
+        TextButton(
+            onClick = onReplayOnboarding,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = AccessibilityPolicy.MIN_TOUCH_TARGET_DP.dp)
+                .semantics {
+                    contentDescription = AccessibilityPolicy.SETTINGS_REPLAY_ONBOARDING_CONTENT_DESCRIPTION
+                },
+        ) {
+            Text("オンボーディングをもう一度見る")
         }
 
         Spacer(Modifier.weight(1f))
