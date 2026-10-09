@@ -15,6 +15,7 @@ import app.soine.dream.AndroidDreamDiscoveryStore
 import app.soine.dream.StoredDreamDiscoveryRepository
 import app.soine.health.AndroidHealthConnectSleepDataSource
 import app.soine.health.AndroidHealthPermissionRequestCoordinator
+import app.soine.onboarding.AndroidFirstRunRepository
 import app.soine.privacy.LocalDataClearer
 import app.soine.privacy.LocalDataDeletionService
 import app.soine.relationship.AndroidRelationshipStateStore
@@ -84,6 +85,7 @@ class MainActivity : ComponentActivity() {
                 else -> 0
             }
         }
+        val firstRunRepository = AndroidFirstRunRepository(applicationContext)
         val deletionService = LocalDataDeletionService(
             repository = repository,
             clearers = listOf(
@@ -93,6 +95,7 @@ class MainActivity : ComponentActivity() {
                 LocalDataClearer { soundEventStore.clear() },
                 LocalDataClearer { relationshipStore.clear() },
                 LocalDataClearer { dreamStore.clear() },
+                LocalDataClearer { firstRunRepository.resetForReplay() },
             ),
         )
         setContent {
@@ -108,6 +111,7 @@ class MainActivity : ComponentActivity() {
                 soundAnalysisPreferencesStore = soundAnalysisPreferences,
                 soundEventRepository = soundEventRepository,
                 overnightSoundAnalysisController = overnightSoundAnalysisController,
+                firstRunRepository = firstRunRepository,
             )
         }
     }

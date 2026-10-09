@@ -17,6 +17,11 @@ enum class AnalyticsEvent(
     MORNING_SUMMARY_VIEWED("morning_summary_viewed"),
     NIGHT_MEMORY_OPENED("night_memory_opened"),
     DREAM_DISCOVERED("dream_discovered"),
+    ONBOARDING_STARTED("onboarding_started"),
+    ONBOARDING_STEP_VIEWED("onboarding_step_viewed"),
+    ONBOARDING_COMPLETED("onboarding_completed"),
+    ONBOARDING_SKIPPED("onboarding_skipped"),
+    ONBOARDING_REPLAYED("onboarding_replayed"),
 }
 
 fun interface AnalyticsTracker {

@@ -34,4 +34,30 @@ object AccessibilityPolicy {
      * TalkBack / VoiceOver can announce the action.
      */
     const val WAKE_CONTENT_DESCRIPTION: String = "起床して朝の記録を見る"
+
+    /**
+     * Accessibility label for the onboarding "スキップ" CTA. The
+     * button in `OnboardingScreen.kt` must apply this string via a
+     * `semantics { contentDescription = ... }` block so TalkBack /
+     * VoiceOver can announce the action.
+     */
+    const val ONBOARDING_SKIP_CONTENT_DESCRIPTION: String = "オンボーディングをスキップする"
+
+    /**
+     * Accessibility label for the onboarding "もどる" CTA.
+     */
+    const val ONBOARDING_BACK_CONTENT_DESCRIPTION: String = "前のステップに戻る"
+
+    /**
+     * Accessibility label for the onboarding "次へ" / "はじめる" CTA.
+     */
+    const val ONBOARDING_NEXT_CONTENT_DESCRIPTION: String = "次のステップへ進む"
+
+    /**
+     * Accessibility label for the "オンボーディングをもう一度見る"
+     * text button in Settings. The SettingsScreen text button must
+     * apply this string via a `semantics { contentDescription = ... }`
+     * block so TalkBack / VoiceOver can announce the action.
+     */
+    const val SETTINGS_REPLAY_ONBOARDING_CONTENT_DESCRIPTION: String = "オンボーディングをもう一度見る"
 }

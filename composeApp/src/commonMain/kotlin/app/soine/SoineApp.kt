@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import app.soine.accessibility.AccessibilityPreferences
 import app.soine.accessibility.DefaultAccessibilityPreferences
+import app.soine.analytics.AnalyticsTracker
 import app.soine.analytics.BedtimeAnalytics
 import app.soine.audio.*
 import app.soine.companion.BedtimeSignatureController
@@ -20,6 +21,10 @@ import app.soine.dream.InitialDreamCatalog
 import app.soine.navigation.*
 import app.soine.night.InitialNightEventCatalog
 import app.soine.night.NightEventEngineInput
+import app.soine.onboarding.FirstRunRepository
+import app.soine.onboarding.FirstRunState
+import app.soine.onboarding.OnboardingController
+import app.soine.onboarding.OnboardingScreen
 import app.soine.privacy.LocalDataDeletionResult
 import app.soine.privacy.LocalDataDeletionService
 import app.soine.relationship.CompanionProgressRepository
@@ -34,6 +39,7 @@ private enum class SecondaryScreen {
     DREAM_ALBUM,
     SETTINGS,
     PRIVACY_DATA,
+    ONBOARDING,
 }
 
 @Composable
@@ -51,11 +57,16 @@ fun SoineApp(
     soundEventRepository: SoundEventRepository,
     overnightSoundAnalysisController: OvernightSoundAnalysisController =
         NoOpOvernightSoundAnalysisController,
+    firstRunRepository: FirstRunRepository,
+    analyticsTracker: AnalyticsTracker = app.soine.analytics.NoOpAnalyticsTracker,
     appVersion: String = "0.1.0",
     bedtimeAnalytics: BedtimeAnalytics? = null,
 ) {
     val controller = remember(repository) { BedtimeFlowController(repository) }
     val analytics = bedtimeAnalytics
+    val onboardingController = remember(firstRunRepository, analyticsTracker) {
+        OnboardingController(firstRunRepository, analyticsTracker)
+    }
     val audioCoordinator = remember(ambientAudioController, audioPreferencesStore) {
         BedtimeAudioCoordinator(ambientAudioController, audioPreferencesStore, ::currentTimeMillis)
     }
@@ -135,6 +146,15 @@ fun SoineApp(
     }
 
     LaunchedEffect(controller, dreamCoordinator) {
+        // #194: surface the onboarding flow on a fresh install. The
+        // gate is checked once at app start; the LaunchedEffect is
+        // keyed on the repository so a "replay" from Settings
+        // (which calls resetForReplay) re-triggers this gate on the
+        // next launch.
+        if (firstRunRepository.read().isFirstRun) {
+            secondaryScreen = SecondaryScreen.ONBOARDING
+        }
+
         val initialDestination = controller.initialDestination()
         destination = initialDestination
         if (initialDestination is BedtimeDestination.Sleeping) {
@@ -192,6 +212,11 @@ fun SoineApp(
 
     MaterialTheme {
         when (secondaryScreen) {
+            SecondaryScreen.ONBOARDING -> OnboardingScreen(
+                controller = onboardingController,
+                onCompleted = { secondaryScreen = null },
+                onSkipped = { secondaryScreen = null },
+            )
             SecondaryScreen.DREAM_ALBUM -> DreamAlbumScreen(
                 entries = dreamAlbumEntries,
                 onBack = { secondaryScreen = null },
@@ -265,6 +290,15 @@ fun SoineApp(
                             soundEventRepository.getAll().sessionSummaries()
                         }.getOrDefault(emptyList())
                     }
+                },
+                onReplayOnboarding = {
+                    // #194: replay flips the persisted gate back to
+                    // NOT_STARTED so the next launch shows the
+                    // onboarding flow again. The user sees it now
+                    // because we also navigate to the ONBOARDING
+                    // secondary screen.
+                    onboardingController.replay()
+                    secondaryScreen = SecondaryScreen.ONBOARDING
                 },
                 onBack = { secondaryScreen = null },
             )
