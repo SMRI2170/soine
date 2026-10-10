@@ -51,9 +51,9 @@ class SleepStartWakeCtaSemanticsTest {
 
     @Test
     fun appScreenWiresSleepStartLabelThroughAccessibilityPolicy() {
-        val source = loadAppSource()
+        val bedtimeSource = loadBedtimeSource()
         assertTrue(
-            source.contains("AccessibilityPolicy.SLEEP_START_CONTENT_DESCRIPTION"),
+            bedtimeSource.contains("AccessibilityPolicy.SLEEP_START_CONTENT_DESCRIPTION"),
             "BedtimeScreen's sleep-start CTA must reference the AccessibilityPolicy label, " +
                 "not an inline literal, so the policy is the single source of truth.",
         )
@@ -71,15 +71,21 @@ class SleepStartWakeCtaSemanticsTest {
 
     @Test
     fun appScreenAppliesSemanticsBlockForSleepStartCta() {
-        val source = loadAppSource()
-        // The semantics block must sit on the same composable that owns
-        // the onClick = onStartSleep callback. We check the surrounding
-        // window so the two facts stay correlated.
-        val window = windowAround(source, "onClick = onStartSleep")
+        val bedtimeSource = loadBedtimeSource()
+        // The semantics block must sit on the same composable that
+        // owns the onStartSleep callback. We look at the second
+        // occurrence of the constant — the first is the docstring
+        // comment, the second is the actual call site.
+        val firstIdx = bedtimeSource.indexOf("SLEEP_START_CONTENT_DESCRIPTION")
+        check(firstIdx >= 0) { "Expected SLEEP_START_CONTENT_DESCRIPTION in BedtimeScreen.kt" }
+        val secondIdx = bedtimeSource.indexOf("SLEEP_START_CONTENT_DESCRIPTION", firstIdx + 1)
+        check(secondIdx >= 0) { "Expected a second occurrence of SLEEP_START_CONTENT_DESCRIPTION in BedtimeScreen.kt" }
+        val start = (secondIdx - 200).coerceAtLeast(0)
+        val end = (secondIdx + 400).coerceAtMost(bedtimeSource.length)
+        val window = bedtimeSource.substring(start, end)
         assertTrue(
             window.contains("contentDescription = AccessibilityPolicy.SLEEP_START_CONTENT_DESCRIPTION"),
-            "Sleep-start Button must wrap onStartSleep with a semantics block that sets " +
-                "contentDescription to AccessibilityPolicy.SLEEP_START_CONTENT_DESCRIPTION. " +
+            "Sleep-start CTA must apply contentDescription to AccessibilityPolicy.SLEEP_START_CONTENT_DESCRIPTION. " +
                 "Window dump:\n" + window,
         )
     }
@@ -118,16 +124,36 @@ class SleepStartWakeCtaSemanticsTest {
         )
     }
 
+    private fun loadBedtimeSource(): String {
+        // #169 moved the bedtime screen into its own file. The
+        // wake CTA stays in App.kt; the sleep-start CTA moves to
+        // BedtimeScreen.kt.
+        val candidates = listOf(
+            "composeApp/src/commonMain/kotlin/app/soine/BedtimeScreen.kt",
+            "../composeApp/src/commonMain/kotlin/app/soine/BedtimeScreen.kt",
+            "src/commonMain/kotlin/app/soine/BedtimeScreen.kt",
+            "../src/commonMain/kotlin/app/soine/BedtimeScreen.kt",
+        )
+        for (path in candidates) {
+            val file = java.io.File(path)
+            if (file.exists()) return file.readText(Charsets.UTF_8)
+        }
+        error(
+            "BedtimeScreen.kt not found in any of the candidate paths; cannot run the CTA " +
+                "semantics smoke gate. Tried: " + candidates.joinToString(),
+        )
+    }
+
     /**
      * Returns a 600-char window around the first occurrence of [marker].
      * The window is wide enough to cover a `Button(...)` block with the
      * modifier chain and the `onClick = ...` site.
      */
-    private fun windowAround(source: String, marker: String): String {
+    private fun windowAround(source: String, marker: String, windowSize: Int = 600): String {
         val idx = source.indexOf(marker)
         check(idx >= 0) { "Expected $marker in App.kt" }
         val start = (idx - 200).coerceAtLeast(0)
-        val end = (idx + 400).coerceAtMost(source.length)
+        val end = (idx + windowSize).coerceAtMost(source.length)
         return source.substring(start, end)
     }
 }

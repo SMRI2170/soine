@@ -95,6 +95,14 @@ fun SoineApp(
     var dreamDiscoveries by remember { mutableStateOf<List<DreamDiscovery>>(emptyList()) }
     var notifiedDreamIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var nightMemoryEntries by remember { mutableStateOf<List<NightMemoryEntry>>(emptyList()) }
+    var relationshipStage by remember {
+        mutableStateOf(CompanionRelationshipStage.NEW)
+    }
+    LaunchedEffect(companionProgressRepository) {
+        relationshipStage = runCatching {
+            companionProgressRepository.get().familiarityStage.toCompanionRelationshipStage()
+        }.getOrDefault(CompanionRelationshipStage.NEW)
+    }
     var bedtimeSignatureState by remember { mutableStateOf<BedtimeSignatureState?>(null) }
     var bedtimeSignatureJob by remember { mutableStateOf<Job?>(null) }
     var microphonePermissionState by remember(microphonePermissionController) {
@@ -507,6 +515,7 @@ fun SoineApp(
                 defaultTimerLabel = defaultTimerLabel,
                 audioPlaying = playbackState.status == AmbientPlaybackStatus.PLAYING,
                 remainingTimerLabel = remainingLabel,
+                relationshipStage = relationshipStage,
                 onToggleAudio = {
                     audioCoordinator.togglePlayback()
                     refreshAudioPreferences()
