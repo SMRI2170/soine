@@ -97,6 +97,13 @@ fun SoineApp(
     var dreamDiscoveries by remember { mutableStateOf<List<DreamDiscovery>>(emptyList()) }
     var notifiedDreamIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var nightMemoryEntries by remember { mutableStateOf<List<NightMemoryEntry>>(emptyList()) }
+    var soundEventSummary by remember {
+        // Aggregated presentation view of the latest
+        // session's sound events. Renders null when the
+        // optional sound analysis did not produce any
+        // events, so the morning screen stays quiet.
+        mutableStateOf<app.soine.sound.SoundEventSummary?>(null)
+    }
     var relationshipStage by remember {
         mutableStateOf(CompanionRelationshipStage.NEW)
     }
@@ -534,11 +541,27 @@ fun SoineApp(
                                 emptyList()
                             }
                             analytics?.onNightMemoryViewed(nightMemoryEntries.size)
+                            // Aggregate the latest session's
+                            // sound events into a
+                            // presentation summary. The
+                            // morning screen consumes the
+                            // summary, not the raw list, so
+                            // the aggregation is the single
+                            // boundary that enforces the
+                            // "no medical claim" copy rule.
+                            soundEventSummary = try {
+                                val sessionId = next.session.id
+                                val all = soundEventRepository.getAll()
+                                all.filter { it.sessionId == sessionId }.summarize()
+                            } catch (_: Throwable) {
+                                null
+                            }
                         }
                     }
                 },
                 onDone = {
                     nightMemoryEntries = emptyList()
+                    soundEventSummary = null
                     bedtimeSignatureState = null
                     destination = controller.dismissMorning()
                     analytics?.onDestinationReached(destination)
@@ -557,6 +580,10 @@ fun SoineApp(
                 sleepingCompanionIntent = bedtimeSignatureState?.step?.intent,
                 quietSleepUi = bedtimeSignatureState?.quietUi == true,
                 reduceMotion = reduceMotion,
+                soundEventSummary = soundEventSummary,
+                onOpenPrivacy = {
+                    secondaryScreen = SecondaryScreen.PRIVACY_DATA
+                },
                 ambientSoundLabel = ambientLabel,
                 defaultTimerLabel = defaultTimerLabel,
                 audioPlaying = playbackState.status == AmbientPlaybackStatus.PLAYING,

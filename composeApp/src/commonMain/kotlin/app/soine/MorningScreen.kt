@@ -40,6 +40,8 @@ import app.soine.dream.DreamDiscovery
 import app.soine.sleep.SleepSession
 import app.soine.sleep.SleepState
 import app.soine.sleep.summary
+import app.soine.sound.SoundEventSummary
+import app.soine.sound.userFacingLine
 
 /**
  * V1 morning screen — the "昨夜を発見する" reveal.
@@ -63,6 +65,8 @@ fun MorningScreen(
     morningGreeting: String = DEFAULT_MORNING_GREETING,
     relationshipStage: CompanionRelationshipStage = CompanionRelationshipStage.NEW,
     previousStage: CompanionRelationshipStage? = null,
+    soundEventSummary: SoundEventSummary? = null,
+    onOpenPrivacy: () -> Unit = {},
 ) {
     val summary = session.summary()
     val presentation = CompanionStagePresentationPolicy.forStage(relationshipStage)
@@ -126,6 +130,24 @@ fun MorningScreen(
         if (nightMemoryEntries.isNotEmpty()) {
             NightMemoryTimeline(nightMemoryEntries)
             Spacer(Modifier.height(SoineTokens.SpacingLg))
+        }
+
+        // Quiet one-line sound summary. Renders only when
+        // the optional sound analysis produced events for
+        // the session. The copy never makes a medical
+        // claim ("寝言のような音"), never shows a
+        // confidence percentage, and never references raw
+        // audio. The "詳細と削除は設定から" link routes
+        // to the privacy-and-data screen so the user can
+        // inspect and delete the events.
+        soundEventSummary?.let { summary ->
+            summary.userFacingLine()?.let { line ->
+                SoundSummaryReveal(
+                    line = line,
+                    onOpenPrivacy = onOpenPrivacy,
+                )
+                Spacer(Modifier.height(SoineTokens.SpacingLg))
+            }
         }
 
         // Data layer: a compact summary card with the duration
@@ -259,6 +281,48 @@ private fun RelationshipChangeReveal(copy: String) {
                 color = SoineColors.sunrise,
                 fontWeight = FontWeight.SemiBold,
             )
+        }
+    }
+}
+
+/**
+ * Quiet one-line sound summary reveal. Renders only when
+ * the optional sound analysis produced events for the
+ * session. The copy is intentionally short — one
+ * phrase, no category list, no count, no confidence
+ * percentage, no medical claim. The "詳細と削除は設定
+ * から" link routes to the privacy-and-data screen so
+ * the user can inspect and delete the events.
+ *
+ * The reveal sits between the night memory timeline and
+ * the summary card so the user's eye lands on the
+ * memory layer first, the sound summary second (only if
+ * present), and the data layer last.
+ */
+@Composable
+private fun SoundSummaryReveal(
+    line: String,
+    onOpenPrivacy: () -> Unit,
+) {
+    SoinePanel(modifier = Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(SoineTokens.SpacingXs)) {
+            SoineSectionHeader("今夜の音")
+            Text(
+                text = line,
+                style = MaterialTheme.typography.bodyMedium,
+                color = SoineColors.cream,
+            )
+            androidx.compose.material3.TextButton(
+                onClick = onOpenPrivacy,
+                modifier = Modifier
+                    .heightIn(min = SoineTokens.QuietCtaHeight)
+                    .align(Alignment.End),
+            ) {
+                Text(
+                    "詳細と削除は設定から",
+                    color = SoineColors.hush,
+                )
+            }
         }
     }
 }
