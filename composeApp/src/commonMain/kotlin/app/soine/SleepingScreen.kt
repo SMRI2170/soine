@@ -41,6 +41,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.soine.accessibility.AccessibilityPolicy
 import app.soine.companion.CompanionIntent
+import app.soine.companion.CompanionRelationshipStage
+import app.soine.companion.CompanionStagePresentationPolicy
 import app.soine.design.SoineColors
 import app.soine.design.SoinePrimaryButton
 import app.soine.design.SoineQuietButton
@@ -80,6 +82,7 @@ fun SleepingScreen(
     reduceMotion: Boolean,
     companionIntent: CompanionIntent?,
     quietUi: Boolean,
+    relationshipStage: CompanionRelationshipStage = CompanionRelationshipStage.NEW,
     autoHideAfterMillis: Long = AUTO_HIDE_AFTER_MILLIS,
 ) {
     var timerDialog by remember { mutableStateOf(false) }
@@ -117,6 +120,7 @@ fun SleepingScreen(
         HeroCompanion(
             reduceMotion = reduceMotion,
             companionIntent = companionIntent,
+            relationshipStage = relationshipStage,
         )
 
         // Top status row — a single line of small status indicators.
@@ -183,13 +187,18 @@ fun SleepingScreen(
 private fun HeroCompanion(
     reduceMotion: Boolean,
     companionIntent: CompanionIntent?,
+    relationshipStage: CompanionRelationshipStage,
 ) {
+    val presentation = CompanionStagePresentationPolicy.forStage(relationshipStage)
+    val glowAlpha = presentation.sleepingAccentAlpha
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
     ) {
         // Soft glow behind the companion. The fade from cream to
-        // midnight echoes the bedtime scene but stays still.
+        // midnight echoes the bedtime scene but stays still. The
+        // alpha is stage-gated so a closer relationship warms the
+        // bedside scene without changing the camera.
         Surface(
             modifier = Modifier
                 .size(360.dp)
@@ -218,7 +227,7 @@ private fun HeroCompanion(
                         drawCircle(
                             brush = Brush.radialGradient(
                                 colors = listOf(
-                                    SoineColors.cream.copy(alpha = 0.15f),
+                                    SoineColors.cream.copy(alpha = glowAlpha),
                                     SoineColors.cream.copy(alpha = 0.0f),
                                 ),
                                 center = center,

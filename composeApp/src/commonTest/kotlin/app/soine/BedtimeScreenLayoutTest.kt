@@ -92,26 +92,25 @@ class BedtimeScreenLayoutTest {
     @Test
     fun bedtimeScreenHeroSceneGrowsWithRelationshipStage() {
         // The relationship-stage prop drives the scene size so a
-        // closer relationship feels closer to the camera. The test
-        // pins the four-stage scale.
+        // closer relationship feels closer to the camera. The
+        // values live in
+        // `app.soine.companion.CompanionStagePresentationPolicy`
+        // (#175 single source of truth) so a future polish slice
+        // can rebalance the curve without touching the screen.
         val expectedSizes = mapOf(
             CompanionRelationshipStage.NEW to 220,
             CompanionRelationshipStage.WARMING_UP to 230,
             CompanionRelationshipStage.FAMILIAR to 250,
             CompanionRelationshipStage.CLOSE to 280,
         )
-        // The source encodes these in a `when` expression. The test
-        // verifies that each value is present in the source.
-        val source = loadBedtimeSource()
+        val policySource = loadSource(
+            "composeApp/src/commonMain/kotlin/app/soine/companion/CompanionStagePresentation.kt",
+        )
         for ((stage, size) in expectedSizes) {
-            // We accept either the full stage enum literal (e.g.
-            // `CompanionRelationshipStage.NEW`) or the short name
-            // (`NEW`); the source has both depending on the
-            // surrounding syntax.
             val stageName = stage.name
             assertTrue(
-                source.contains("$size.dp"),
-                "Expected hero size $size.dp for stage $stageName to be present in BedtimeScreen.kt",
+                policySource.contains("bedtimeHeroSizeDp = $size"),
+                "Expected hero size $size.dp for stage $stageName to be present in CompanionStagePresentation.kt",
             )
         }
     }
@@ -151,20 +150,23 @@ class BedtimeScreenLayoutTest {
         )
     }
 
-    private fun loadBedtimeSource(): String {
+    private fun loadBedtimeSource(): String = loadSource(
+        "composeApp/src/commonMain/kotlin/app/soine/BedtimeScreen.kt",
+    )
+
+    private fun loadSource(relativePath: String): String {
         val candidates = listOf(
-            "composeApp/src/commonMain/kotlin/app/soine/BedtimeScreen.kt",
-            "../composeApp/src/commonMain/kotlin/app/soine/BedtimeScreen.kt",
-            "src/commonMain/kotlin/app/soine/BedtimeScreen.kt",
-            "../src/commonMain/kotlin/app/soine/BedtimeScreen.kt",
+            relativePath,
+            "../$relativePath",
+            relativePath.removePrefix("composeApp/"),
+            "../${relativePath.removePrefix("composeApp/")}",
         )
         for (path in candidates) {
             val file = java.io.File(path)
             if (file.exists()) return file.readText(Charsets.UTF_8)
         }
         error(
-            "BedtimeScreen.kt not found in any of the candidate paths; tried: " +
-                candidates.joinToString(),
+            "Source file not found in any of the candidate paths: $relativePath",
         )
     }
 }

@@ -98,6 +98,15 @@ fun SoineApp(
     var relationshipStage by remember {
         mutableStateOf(CompanionRelationshipStage.NEW)
     }
+    var previousRelationshipStage by remember {
+        // The relationship stage as of the start of the current
+        // sleep. The morning screen uses this to surface a quiet
+        // "stage advanced" notice when the user wakes and the
+        // relationship has crossed since they fell asleep. The
+        // variable is reset to null after the morning "今日を
+        // はじめる" so the notice is genuinely one-shot.
+        mutableStateOf<CompanionRelationshipStage?>(null)
+    }
     LaunchedEffect(companionProgressRepository) {
         relationshipStage = runCatching {
             companionProgressRepository.get().familiarityStage.toCompanionRelationshipStage()
@@ -407,6 +416,14 @@ fun SoineApp(
                 destination = destination,
                 onStartSleep = {
                     scope.launch {
+                        // Capture the relationship stage at the
+                        // moment the user falls asleep. The
+                        // morning screen will compare the
+                        // post-wake stage against this value to
+                        // surface a quiet "stage advanced"
+                        // notice when the relationship has
+                        // crossed.
+                        previousRelationshipStage = relationshipStage
                         val next = controller.start()
                         destination = next
                         if (next is BedtimeDestination.Sleeping) {
@@ -500,6 +517,9 @@ fun SoineApp(
                     bedtimeSignatureState = null
                     destination = controller.dismissMorning()
                     analytics?.onDestinationReached(destination)
+                    // The "stage advanced" notice is one-shot;
+                    // it must not reappear on the next wake.
+                    previousRelationshipStage = null
                 },
                 onRetry = { scope.launch { destination = controller.initialDestination() } },
                 onOpenDreamAlbum = { secondaryScreen = SecondaryScreen.DREAM_ALBUM },
@@ -517,6 +537,7 @@ fun SoineApp(
                 audioPlaying = playbackState.status == AmbientPlaybackStatus.PLAYING,
                 remainingTimerLabel = remainingLabel,
                 relationshipStage = relationshipStage,
+                previousRelationshipStage = previousRelationshipStage,
                 onToggleAudio = {
                     audioCoordinator.togglePlayback()
                     refreshAudioPreferences()

@@ -42,6 +42,31 @@ The thresholds are versioned by `FamiliarityPolicy.CURRENT_VERSION`. Persisted v
 - dream/event pools
 - small room interactions
 
+## Visual presentation (V1, #175)
+
+The relationship stage is never shown as a number, an XP bar,
+or a level chip. The user feels the progression through a
+single source of truth owned by
+[`app.soine.companion.CompanionStagePresentationPolicy`][companion-stage-presentation-doc]:
+
+- bedtime hero scene size (220 / 230 / 250 / 280 dp)
+- bedtime hero glow alpha
+- sleeping bed offset fraction
+- sleeping accent alpha
+- morning glow color and alpha
+- one-line greeting suffix for the bedtime and morning headlines
+- a quiet one-shot "stage advanced" reveal in the morning
+  screen (FAMILIAR and CLOSE only)
+
+The presentation never introduces a new color outside the
+Soine palette. The presentation never exposes the stage
+value, the session count, or the cumulative hours in the
+chrome. The user can take a screenshot at NEW and at CLOSE
+side-by-side and see the difference; the user cannot read
+the number off the screen.
+
+[companion-stage-presentation-doc]: relationship-presentation.md
+
 ## Routine memory
 
 The app may derive local, non-sensitive routine facts:
