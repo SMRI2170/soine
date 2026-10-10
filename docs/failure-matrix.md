@@ -165,9 +165,19 @@ Re-run this matrix when any of the following change:
 
 ## Open follow-up work (out of scope for this PR)
 
-- [ ] Replace `InMemoryAmbientAudioController` with a failure-injecting
+- ~~Replace `InMemoryAmbientAudioController` with a failure-injecting
       fake in `commonTest` so audio focus loss / decode failure can be
-      exercised without a real device (#185 task list).
+      exercised without a real device (#185 task list).~~ **Done**
+      in the V1 failure-injection slice: the
+      `FailureInjectingAmbientAudioController` fake lives in
+      `commonTest` and the `AudioFailureInjectionTest` exercises the
+      graceful-degradation contract without a real device.
+- ~~Add a renderer failure-injection test that uses a
+      `FailureInjectingCompanionRenderer` to drive the static
+      fallback path.~~ **Done** in the V1 failure-injection slice:
+      `FailureInjectingCompanionRenderer` (in `commonTest`) +
+      `FailureInjectionContractTest` cover the retry / static
+      fallback / recovery / counter-reset / manual-retry paths.
 - [ ] Add a Health failure surface on iOS mirror that mirrors the
       Android `SleepDataSource` sealed interface (already in place;
       re-verify after the iOS HealthKit adapter changes ship).
