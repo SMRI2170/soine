@@ -102,4 +102,12 @@ object AccessibilityPolicy {
      * Accessibility label for the sleeping "設定" quiet button.
      */
     const val SLEEPING_SETTINGS_CONTENT_DESCRIPTION: String = "設定を開く"
+
+    /**
+     * Accessibility label for the morning "今日をはじめる" CTA.
+     * The button in `MorningScreen.kt` must apply this string via
+     * a `semantics { contentDescription = ... }` block so TalkBack /
+     * VoiceOver can announce the action.
+     */
+    const val MORNING_DONE_CONTENT_DESCRIPTION: String = "朝の記録を閉じて今日を始める"
 }

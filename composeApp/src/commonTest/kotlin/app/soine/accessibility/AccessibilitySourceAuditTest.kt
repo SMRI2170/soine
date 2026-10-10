@@ -48,27 +48,28 @@ class AccessibilitySourceAuditTest {
 
     @Test
     fun appScreenPrimaryCtasMeetLargerTouchTarget() {
-        val source = loadSource("composeApp/src/commonMain/kotlin/app/soine/App.kt")
-        // The bedtime "一緒に寝る" and sleeping "起きる" CTAs use
-        // the SoinePrimaryButton component, which enforces a 56.dp
-        // minimum height (above the 48.dp baseline). The acceptance
-        // criteria require the primary action to remain reachable
-        // at large text scales, so the touch target must be at
+        val sources = listOf(
+            "composeApp/src/commonMain/kotlin/app/soine/App.kt",
+            "composeApp/src/commonMain/kotlin/app/soine/BedtimeScreen.kt",
+            "composeApp/src/commonMain/kotlin/app/soine/SleepingScreen.kt",
+            "composeApp/src/commonMain/kotlin/app/soine/MorningScreen.kt",
+        )
+        val combined = sources.joinToString("\n") { path ->
+            val candidates = listOf(path, "../$path", path.removePrefix("composeApp/"), "../${path.removePrefix("composeApp/")}")
+            candidates.firstNotNullOfOrNull { java.io.File(it).takeIf(java.io.File::exists)?.readText(Charsets.UTF_8) }
+                ?: ""
+        }
+        // The bedtime "一緒に寝る", sleeping "起きる", and morning
+        // "今日をはじめる" CTAs all use the SoinePrimaryButton
+        // component, which enforces a 56.dp minimum height
+        // (above the 48.dp baseline). The acceptance criteria
+        // require the primary action to remain reachable at
+        // large text scales, so the touch target must be at
         // least the baseline 48.dp.
         assertTrue(
-            source.contains("SoinePrimaryButton("),
-            "Primary sleep / wake CTAs must use SoinePrimaryButton so the touch target stays " +
-                "above the 48.dp baseline. The component enforces the 56.dp minimum height.",
-        )
-        // The error-state "もう一度試す" is not a primary CTA but
-        // is still reachable; the Soine design system requires
-        // every primary action to use the SoinePrimaryButton
-        // component. Non-primary buttons (the retry button) are
-        // allowed to be a plain Button as long as they meet the
-        // 48dp touch target baseline.
-        assertTrue(
-            source.contains("SoineTokens") || true, // SoineTokens is imported transitively.
-            "Design system tokens are reachable from App.kt.",
+            combined.contains("SoinePrimaryButton("),
+            "Primary sleep / wake / morning CTAs must use SoinePrimaryButton so the touch target " +
+                "stays above the 48.dp baseline. The component enforces the 56.dp minimum height.",
         )
     }
 

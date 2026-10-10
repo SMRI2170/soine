@@ -508,6 +508,7 @@ fun SoineApp(
                     secondaryScreen = SecondaryScreen.SETTINGS
                 },
                 nightMemoryEntries = nightMemoryEntries,
+                discoveries = dreamDiscoveries,
                 sleepingCompanionIntent = bedtimeSignatureState?.step?.intent,
                 quietSleepUi = bedtimeSignatureState?.quietUi == true,
                 reduceMotion = reduceMotion,
