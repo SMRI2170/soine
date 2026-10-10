@@ -72,4 +72,34 @@ object AccessibilityPolicy {
      * Accessibility label for the bedtime "設定" quiet button.
      */
     const val BEDTIME_SETTINGS_CONTENT_DESCRIPTION: String = "設定を開く"
+
+    /**
+     * Accessibility label for the sleeping scene tap-to-reveal
+     * interaction. Tapping the scene brings the secondary controls
+     * back. The label is exposed both as a contentDescription and
+     * an onClickLabel so TalkBack / VoiceOver announce the action.
+     */
+    const val SLEEPING_SCENE_REVEAL_CONTENT_DESCRIPTION: String = "画面をタップして操作を表示"
+
+    /**
+     * Accessibility label for the sleeping "一時停止 / 再生" quiet
+     * button.
+     */
+    const val SLEEPING_AUDIO_TOGGLE_CONTENT_DESCRIPTION: String = "環境音の再生と一時停止を切り替え"
+
+    /**
+     * Accessibility label for the sleeping "タイマー" quiet button.
+     */
+    const val SLEEPING_TIMER_CONTENT_DESCRIPTION: String = "スリープタイマーを変更"
+
+    /**
+     * Accessibility label for the sleeping "タイマーを解除" quiet
+     * button.
+     */
+    const val SLEEPING_TIMER_CANCEL_CONTENT_DESCRIPTION: String = "スリープタイマーを解除"
+
+    /**
+     * Accessibility label for the sleeping "設定" quiet button.
+     */
+    const val SLEEPING_SETTINGS_CONTENT_DESCRIPTION: String = "設定を開く"
 }

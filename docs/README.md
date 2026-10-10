@@ -52,6 +52,7 @@ Start here when implementing Soine.
 - onboarding.md — permission-free first-run flow, replay, analytics funnel ([#194][issue-194])
 - design-system.md — V1 color / type / spacing / radius tokens and components ([#168][issue-168])
 - bedtime-redesign.md — V1 bedtime screen as the signature moment, hero companion + relationship-stage variation ([#169][issue-169])
+- sleeping-redesign.md — V1 sleeping screen as a quiet bedside scene, auto-hide + tap-to-reveal + anchored wake ([#170][issue-170])
 
 ## Decisions
 - decisions/0001-kmp-app-shell.md
@@ -66,6 +67,7 @@ Start here when implementing Soine.
 [issue-183]: https://github.com/SMRI2170/soine/issues/183
 [issue-168]: https://github.com/SMRI2170/soine/issues/168
 [issue-169]: https://github.com/SMRI2170/soine/issues/169
+[issue-170]: https://github.com/SMRI2170/soine/issues/170
 [issue-193]: https://github.com/SMRI2170/soine/issues/193
 [issue-194]: https://github.com/SMRI2170/soine/issues/194
 [issue-195]: https://github.com/SMRI2170/soine/issues/195
