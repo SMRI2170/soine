@@ -136,15 +136,22 @@ fun SettingsScreen(
             SoinePanel {
                 Column(verticalArrangement = Arrangement.spacedBy(SoineTokens.SpacingXs)) {
                     Text(
-                        "見た目と動きのオプション",
+                        "見た目と動き",
                         style = MaterialTheme.typography.titleSmall,
                         color = SoineColors.cream,
                         fontWeight = FontWeight.SemiBold,
                     )
                     Text(
-                        "次のアップデートで追加予定です。今は決められた 4 つの " +
-                            "ステージ (NEW / WARMING_UP / FAMILIAR / CLOSE) で " +
-                            "静かに変化します。",
+                        "今は静かに表情が変わる 2D の姿で毎晩会いに来ます。" +
+                            " 3D の production 表現はアート パイプラインで " +
+                            "準備中。ready になり次第、自動的に切り替わります。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SoineColors.hush,
+                    )
+                    Text(
+                        "関係性 (NEW / WARMING_UP / FAMILIAR / CLOSE) は " +
+                            "4 段階で、距離・挨拶・朝の言葉として静かに " +
+                            "伝わります。",
                         style = MaterialTheme.typography.bodySmall,
                         color = SoineColors.hush,
                     )
