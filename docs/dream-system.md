@@ -100,16 +100,28 @@ The initial catalog is bundled locally and exposed through the same DreamDefinit
 
 ## Dream Album
 
-The shared Compose Dream Album presents the authored catalog as a calm collection rather than a progression grind.
+The shared Compose Dream Album presents the authored catalog as a calm collection rather than a progression grind. See [`docs/dream-album-redesign.md`](dream-album-redesign.md) for the V1 visual-identity redesign slice ([#172][issue-172]).
 
 - discovered dreams show title, authored short line, a subdued rarity label, and discovery date
-- undiscovered dreams hide title, copy, rarity, and art identity behind a neutral placeholder
+- undiscovered dreams hide title, copy, rarity, and art identity behind a silhouette tile (same shape, dimmer palette) so the empty album still has a world-feel
 - discovered entries are ordered before undiscovered entries; recent discoveries appear first
-- selecting a discovered entry opens a lightweight detail dialog
+- selecting a discovered entry opens an immersive sheet (a `ModalBottomSheet`, not a dialog) with a larger art tile, the dream's short line, rarity, and discovery date
 - an explicit empty state explains that dreams are found occasionally after sleeping and does not pressure the user to collect them
 - collection cards expose merged accessibility descriptions; undiscovered entries are announced simply as undiscovered
 - the first Japanese UI formats discovery dates using the Japan calendar day
 - the screen consumes DreamDiscovery records but does not introduce a new persistence layer; persistence/integration remains separate from presentation
+
+## Visual identity (V1, #172)
+
+Each `DreamDefinition.artKey` is mapped deterministically to a `DreamMotif` and a `DreamPalette` so the album reads as a constellation of distinct dreams rather than a row of identical "夢" cards.
+
+- `DreamMotif` is one of eight abstract shapes (`ORB`, `STAR`, `PATH`, `RECTANGLE`, `ARC`, `TRIANGLE`, `CLUSTER`, `CRESCENT`). The shapes are visual mnemonics, not literal illustrations.
+- `DreamPalette` is one of six two-color gradients with an accent. Every color comes from the Soine palette (`SoineColors`); the album never introduces a new color.
+- The mapping is hash-based and stable across runs, sessions, and devices. A null or blank artKey falls back to the neutral palette and the `ORB` motif so the layout never breaks.
+- Undiscovered dreams use the same shape in a dimmer silhouette (the gradient direction is preserved, the accent is muted, the surface is dimmed) so an empty album still has a world-feel instead of a row of "？" placeholders.
+- No progress bar, no streak counter, no "login bonus" copy. The header is a single line "X / N 見つけた" so the user can see the count without feeling pressured to collect.
+
+The visual identity is owned by `app.soine.dream.DreamAlbumArt` (the `DreamAlbumArtTile` composable, the `motifFor` / `paletteFor` mappers, and the `DreamPalette` data class). The album screen consumes the tile through `LazyVerticalGrid` so the visual flows as a scrapbook / constellation.
 
 
 ## Local persistence and app integration
