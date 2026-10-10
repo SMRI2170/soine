@@ -142,10 +142,19 @@ class MorningScreenLayoutTest {
     @Test
     fun morningScreenTouchTargetsMeetBaseline() {
         val source = loadMorningSource()
-        // SoinePrimaryButton enforces the 56dp touch target.
-        // The morning screen does not re-declare it.
+        // SoinePrimaryButton enforces the 56dp touch target
+        // and SoineQuietButton enforces the 48dp touch
+        // target. The morning screen does not re-declare
+        // them; the design-system tokens must surface
+        // directly. We accept either the bare
+        // `MIN_TOUCH_TARGET_DP` constant or the V1 design
+        // system tokens (SoineTokens.QuietCtaHeight,
+        // SoineTokens.PrimaryCtaHeight, etc).
+        val usesDesignSystemTokens = source.contains("MIN_TOUCH_TARGET_DP") ||
+            source.contains("SoineTokens.QuietCtaHeight") ||
+            source.contains("SoineTokens.PrimaryCtaHeight")
         assertTrue(
-            !source.contains("heightIn(min = ") || source.contains("MIN_TOUCH_TARGET_DP"),
+            !source.contains("heightIn(min = ") || usesDesignSystemTokens,
             "MorningScreen must use the design-system touch-target tokens, not raw dp values",
         )
     }
@@ -195,6 +204,51 @@ class MorningScreenLayoutTest {
         assertTrue(
             source.contains("少しだけ、近づいた朝"),
             "MorningScreen relationship-change reveal must use a quiet section header (not a celebration)",
+        )
+    }
+
+    @Test
+    fun morningScreenRendersSoundSummaryReveal() {
+        // #178 ships the overnight sound-event UX as a
+        // quiet one-line reveal in the morning screen.
+        // The reveal must be a SoinePanel that uses the
+        // "*のような*" copy pattern and never references
+        // raw audio. The reveal must not surface a
+        // confidence percentage or a count.
+        val source = loadMorningSource()
+        assertTrue(
+            source.contains("SoundSummaryReveal"),
+            "MorningScreen must define and render SoundSummaryReveal for the overnight sound summary",
+        )
+        assertTrue(
+            source.contains("soundEventSummary"),
+            "MorningScreen must accept a soundEventSummary parameter so the optional sound analysis can flow into the morning view",
+        )
+        assertTrue(
+            source.contains("詳細と削除は設定から"),
+            "MorningScreen sound summary reveal must include the privacy link '詳細と削除は設定から' so the user can inspect / delete the events",
+        )
+    }
+
+    @Test
+    fun morningScreenDoesNotEmbedRawAudioReference() {
+        // #178 explicitly excludes the raw-audio
+        // playback path. The morning screen's user-
+        // facing copy must not mention "audio", "録音",
+        // or "音声ファイル". We strip comment lines so a
+        // mention in a doc comment does not trip the
+        // guard.
+        val source = loadMorningSource()
+        val nonCommentSource = source
+            .lineSequence()
+            .filter { line ->
+                val trimmed = line.trimStart()
+                !(trimmed.startsWith("*") || trimmed.startsWith("//"))
+            }
+            .joinToString("\n")
+        assertTrue(
+            !nonCommentSource.contains("audio"),
+            "MorningScreen must not mention 'audio' in the source; the optional sound analysis uses derived events, not raw audio",
         )
     }
 

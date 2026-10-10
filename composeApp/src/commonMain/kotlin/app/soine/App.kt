@@ -50,6 +50,8 @@ fun App(
     onCancelTimer: () -> Unit,
     relationshipStage: CompanionRelationshipStage = CompanionRelationshipStage.NEW,
     previousRelationshipStage: CompanionRelationshipStage? = null,
+    soundEventSummary: app.soine.sound.SoundEventSummary? = null,
+    onOpenPrivacy: () -> Unit = {},
 ) {
     SoineTheme {
         Surface(Modifier.fillMaxSize()) {
@@ -87,6 +89,8 @@ fun App(
                     dreamDiscoveries = discoveries,
                     relationshipStage = relationshipStage,
                     previousStage = previousRelationshipStage,
+                    soundEventSummary = soundEventSummary,
+                    onOpenPrivacy = onOpenPrivacy,
                 )
                 is BedtimeDestination.Error -> Column(
                     Modifier.fillMaxSize().padding(24.dp),
@@ -148,6 +152,8 @@ private fun MorningSummaryScreen(
     dreamDiscoveries: List<DreamDiscovery> = emptyList(),
     relationshipStage: CompanionRelationshipStage = CompanionRelationshipStage.NEW,
     previousStage: CompanionRelationshipStage? = null,
+    soundEventSummary: app.soine.sound.SoundEventSummary? = null,
+    onOpenPrivacy: () -> Unit = {},
 ) {
     MorningScreen(
         session = session,
@@ -157,6 +163,8 @@ private fun MorningSummaryScreen(
         dreamDiscoveries = dreamDiscoveries,
         relationshipStage = relationshipStage,
         previousStage = previousStage,
+        soundEventSummary = soundEventSummary,
+        onOpenPrivacy = onOpenPrivacy,
     )
 }
 
