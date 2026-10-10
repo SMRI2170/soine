@@ -62,11 +62,14 @@ class MorningScreenLayoutTest {
         // the dream reveal so the user's eye lands on the
         // emotion first.
         // We anchor on the greeting render call (`text =
-        // morningGreeting,`) and the summary call site so we
-        // measure where the panels actually appear in the
-        // MorningScreen body, not where the helper functions
-        // or constants are declared.
-        val greetingIdx = source.indexOf("text = morningGreeting,")
+        // morningGreeting + (...)`) and the summary call site
+        // so we measure where the panels actually appear in
+        // the MorningScreen body, not where the helper
+        // functions or constants are declared. The
+        // `morningGreeting +` prefix is what the new
+        // relationship-stage presentation appends the stage
+        // suffix onto.
+        val greetingIdx = source.indexOf("text = morningGreeting +")
         val summaryIdx = source.indexOf("SummaryCard(summary = summary)")
         assertTrue(
             greetingIdx >= 0,
@@ -152,6 +155,46 @@ class MorningScreenLayoutTest {
         assertEquals(
             "今日も一緒に起きられたね",
             app.soine.DEFAULT_MORNING_GREETING,
+        )
+    }
+
+    @Test
+    fun morningScreenConsumesStagePresentation() {
+        // #175 ships the relationship-stage visual
+        // presentation as a single source of truth. The
+        // morning screen must consume it so a closer
+        // relationship warms the morning scene through
+        // the morningGreetingSuffix and the hero glow.
+        val source = loadMorningSource()
+        assertTrue(
+            source.contains("CompanionStagePresentationPolicy.forStage"),
+            "MorningScreen must consume CompanionStagePresentationPolicy.forStage so the hero glow and greeting suffix are stage-gated",
+        )
+        assertTrue(
+            source.contains("presentation.morningGreetingSuffix"),
+            "MorningScreen must append the stage-specific morning greeting suffix to the default greeting",
+        )
+    }
+
+    @Test
+    fun morningScreenRendersRelationshipChangeReveal() {
+        // The relationship-change reveal is the one-shot
+        // notice that surfaces when the user wakes and the
+        // relationship stage has crossed since they fell
+        // asleep. The reveal must be a SoinePanel line
+        // (not a celebration, not a number).
+        val source = loadMorningSource()
+        assertTrue(
+            source.contains("RelationshipChangeReveal"),
+            "MorningScreen must define and render RelationshipChangeReveal for the one-shot stage-advanced notice",
+        )
+        assertTrue(
+            source.contains("previousStage != null && previousStage != relationshipStage"),
+            "MorningScreen must compare previousStage against the current stage to gate the one-shot reveal",
+        )
+        assertTrue(
+            source.contains("少しだけ、近づいた朝"),
+            "MorningScreen relationship-change reveal must use a quiet section header (not a celebration)",
         )
     }
 

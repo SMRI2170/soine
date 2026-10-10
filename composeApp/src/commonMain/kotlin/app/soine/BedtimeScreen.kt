@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import app.soine.accessibility.AccessibilityPolicy
 import app.soine.companion.CompanionIntent
 import app.soine.companion.CompanionRenderRequest
+import app.soine.companion.CompanionStagePresentationPolicy
 import app.soine.companion.CompanionStaticFallback
 import app.soine.companion.CompanionRelationshipStage
 import app.soine.design.SoineColors
@@ -88,8 +89,9 @@ fun BedtimeScreen(
         )
         Spacer(Modifier.height(SoineTokens.SpacingLg))
 
+        val presentation = CompanionStagePresentationPolicy.forStage(relationshipStage)
         Text(
-            text = "今日も一緒に眠ろう",
+            text = "今日も一緒に眠ろう" + (presentation.bedtimeGreetingSuffix ?: ""),
             style = MaterialTheme.typography.headlineSmall,
             color = SoineColors.cream,
         )
@@ -160,14 +162,18 @@ private fun HeroCompanionScene(
     relationshipStage: CompanionRelationshipStage,
     reduceMotion: Boolean,
 ) {
-    val sceneSize = heroSceneSize(relationshipStage)
+    val presentation = CompanionStagePresentationPolicy.forStage(relationshipStage)
+    val sceneSize = presentation.bedtimeHeroSizeDp.dp
+    val glowAlpha = presentation.bedtimeGlowAlpha
     Box(
         modifier = Modifier.size(sceneSize),
         contentAlignment = Alignment.Center,
     ) {
         // Soft glow behind the companion. The brush fades from
         // cream (at the center) to midnight (at the edges) so the
-        // scene reads as the warm anchor of the screen.
+        // scene reads as the warm anchor of the screen. The alpha
+        // is stage-gated so a closer relationship warms the scene
+        // without changing the camera.
         Surface(
             modifier = Modifier
                 .size(sceneSize)
@@ -196,7 +202,7 @@ private fun HeroCompanionScene(
                         drawCircle(
                             brush = Brush.radialGradient(
                                 colors = listOf(
-                                    SoineColors.cream.copy(alpha = 0.20f),
+                                    SoineColors.cream.copy(alpha = glowAlpha),
                                     SoineColors.cream.copy(alpha = 0.0f),
                                 ),
                                 center = center,
@@ -214,18 +220,6 @@ private fun HeroCompanionScene(
             reduceMotion = reduceMotion,
         )
     }
-}
-
-/**
- * Pinned size for the hero companion. The relationship stage
- * adjusts the visual size so a closer relationship feels closer
- * to the camera.
- */
-private fun heroSceneSize(relationshipStage: CompanionRelationshipStage) = when (relationshipStage) {
-    CompanionRelationshipStage.NEW -> 220.dp
-    CompanionRelationshipStage.WARMING_UP -> 230.dp
-    CompanionRelationshipStage.FAMILIAR -> 250.dp
-    CompanionRelationshipStage.CLOSE -> 280.dp
 }
 
 /**

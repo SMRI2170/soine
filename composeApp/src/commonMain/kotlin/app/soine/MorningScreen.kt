@@ -29,6 +29,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.soine.accessibility.AccessibilityPolicy
+import app.soine.companion.CompanionRelationshipStage
+import app.soine.companion.CompanionStagePresentationPolicy
 import app.soine.design.SoineColors
 import app.soine.design.SoinePanel
 import app.soine.design.SoinePrimaryButton
@@ -59,8 +61,13 @@ fun MorningScreen(
     onDone: () -> Unit,
     dreamDiscoveries: List<DreamDiscovery> = emptyList(),
     morningGreeting: String = DEFAULT_MORNING_GREETING,
+    relationshipStage: CompanionRelationshipStage = CompanionRelationshipStage.NEW,
+    previousStage: CompanionRelationshipStage? = null,
 ) {
     val summary = session.summary()
+    val presentation = CompanionStagePresentationPolicy.forStage(relationshipStage)
+    val stageAdvancedSinceLastWake =
+        previousStage != null && previousStage != relationshipStage
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -70,12 +77,17 @@ fun MorningScreen(
     ) {
         Spacer(Modifier.height(SoineTokens.SpacingMd))
 
-        // Emotion layer: companion wake reaction.
-        MorningHero(reduceMotion = reduceMotion)
+        // Emotion layer: companion wake reaction. The hero glow
+        // color and alpha are stage-gated so a closer
+        // relationship warms the morning scene.
+        MorningHero(
+            reduceMotion = reduceMotion,
+            relationshipStage = relationshipStage,
+        )
         Spacer(Modifier.height(SoineTokens.SpacingMd))
 
         Text(
-            text = morningGreeting,
+            text = morningGreeting + (presentation.morningGreetingSuffix ?: ""),
             style = MaterialTheme.typography.headlineSmall,
             color = SoineColors.cream,
             fontWeight = FontWeight.SemiBold,
@@ -87,6 +99,17 @@ fun MorningScreen(
             color = SoineColors.hush,
         )
         Spacer(Modifier.height(SoineTokens.SpacingLg))
+
+        // Quiet one-shot "stage advanced" notice. Renders
+        // only when the stage has crossed since the last wake
+        // and the policy has copy for the new stage. The notice
+        // is a single SoinePanel line, not a celebration.
+        if (stageAdvancedSinceLastWake) {
+            presentation.stageAdvancedReveal?.let { revealCopy ->
+                RelationshipChangeReveal(copy = revealCopy)
+                Spacer(Modifier.height(SoineTokens.SpacingLg))
+            }
+        }
 
         // Dream discovery special reveal: when the user found a
         // new dream this morning, surface it before the night
@@ -153,10 +176,18 @@ private fun DreamDiscoveryReveal(
 /**
  * Hero: companion wake reaction. The companion sits on a soft
  * sunrise-tinted glow that echoes the bedtime cream-tinted
- * glow but signals the new day.
+ * glow but signals the new day. The glow color and alpha are
+ * stage-gated so a closer relationship warms the morning scene
+ * without changing the camera.
  */
 @Composable
-private fun MorningHero(reduceMotion: Boolean) {
+private fun MorningHero(
+    reduceMotion: Boolean,
+    relationshipStage: CompanionRelationshipStage,
+) {
+    val presentation = CompanionStagePresentationPolicy.forStage(relationshipStage)
+    val glowColor = presentation.morningGlowColor
+    val glowAlpha = presentation.morningGlowAlpha
     Box(
         modifier = Modifier.size(260.dp),
         contentAlignment = Alignment.Center,
@@ -189,8 +220,8 @@ private fun MorningHero(reduceMotion: Boolean) {
                         drawCircle(
                             brush = Brush.radialGradient(
                                 colors = listOf(
-                                    SoineColors.sunrise.copy(alpha = 0.20f),
-                                    SoineColors.sunrise.copy(alpha = 0.0f),
+                                    glowColor.copy(alpha = glowAlpha),
+                                    glowColor.copy(alpha = 0.0f),
                                 ),
                                 center = center,
                                 radius = radius,
@@ -206,6 +237,29 @@ private fun MorningHero(reduceMotion: Boolean) {
             state = SleepState.FINISHED,
             reduceMotion = reduceMotion,
         )
+    }
+}
+
+/**
+ * Quiet one-shot "stage advanced" notice. Renders as a single
+ * SoinePanel line above the dream discovery reveal so the
+ * "少し近づけた気がする" feeling lands before the user reads
+ * the rest of the morning summary. The notice is intentionally
+ * short — it is not a celebration, and it does not expose a
+ * number.
+ */
+@Composable
+private fun RelationshipChangeReveal(copy: String) {
+    SoinePanel(modifier = Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(SoineTokens.SpacingXs)) {
+            SoineSectionHeader("少しだけ、近づいた朝")
+            Text(
+                text = copy,
+                style = MaterialTheme.typography.titleMedium,
+                color = SoineColors.sunrise,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
     }
 }
 

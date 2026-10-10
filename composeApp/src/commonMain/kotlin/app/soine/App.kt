@@ -49,6 +49,7 @@ fun App(
     onSetTimer: (Int) -> Unit,
     onCancelTimer: () -> Unit,
     relationshipStage: CompanionRelationshipStage = CompanionRelationshipStage.NEW,
+    previousRelationshipStage: CompanionRelationshipStage? = null,
 ) {
     SoineTheme {
         Surface(Modifier.fillMaxSize()) {
@@ -76,6 +77,7 @@ fun App(
                     reduceMotion = reduceMotion,
                     companionIntent = sleepingCompanionIntent,
                     quietUi = quietSleepUi,
+                    relationshipStage = relationshipStage,
                 )
                 is BedtimeDestination.Morning -> MorningSummaryScreen(
                     session = destination.session.toUiSession(),
@@ -83,6 +85,8 @@ fun App(
                     reduceMotion = reduceMotion,
                     onDone = onDone,
                     dreamDiscoveries = discoveries,
+                    relationshipStage = relationshipStage,
+                    previousStage = previousRelationshipStage,
                 )
                 is BedtimeDestination.Error -> Column(
                     Modifier.fillMaxSize().padding(24.dp),
@@ -142,6 +146,8 @@ private fun MorningSummaryScreen(
     reduceMotion: Boolean,
     onDone: () -> Unit,
     dreamDiscoveries: List<DreamDiscovery> = emptyList(),
+    relationshipStage: CompanionRelationshipStage = CompanionRelationshipStage.NEW,
+    previousStage: CompanionRelationshipStage? = null,
 ) {
     MorningScreen(
         session = session,
@@ -149,6 +155,8 @@ private fun MorningSummaryScreen(
         reduceMotion = reduceMotion,
         onDone = onDone,
         dreamDiscoveries = dreamDiscoveries,
+        relationshipStage = relationshipStage,
+        previousStage = previousStage,
     )
 }
 

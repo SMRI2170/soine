@@ -55,6 +55,7 @@ Start here when implementing Soine.
 - sleeping-redesign.md — V1 sleeping screen as a quiet bedside scene, auto-hide + tap-to-reveal + anchored wake ([#170][issue-170])
 - morning-redesign.md — V1 morning screen as the "昨夜を発見する" reveal, Emotion → Memory → Data order with dream discovery special reveal ([#171][issue-171])
 - dream-album-redesign.md — V1 Dream Album as a visual collection, per-dream gradient + motif, immersive sheet detail, no loot-box pressure ([#172][issue-172])
+- relationship-presentation.md — V1 relationship-stage visual presentation, single source of truth for bedtime / sleeping / morning visuals, no XP / level / number ([#175][issue-175])
 
 ## Decisions
 - decisions/0001-kmp-app-shell.md
@@ -72,6 +73,7 @@ Start here when implementing Soine.
 [issue-170]: https://github.com/SMRI2170/soine/issues/170
 [issue-171]: https://github.com/SMRI2170/soine/issues/171
 [issue-172]: https://github.com/SMRI2170/soine/issues/172
+[issue-175]: https://github.com/SMRI2170/soine/issues/175
 [issue-193]: https://github.com/SMRI2170/soine/issues/193
 [issue-194]: https://github.com/SMRI2170/soine/issues/194
 [issue-195]: https://github.com/SMRI2170/soine/issues/195
