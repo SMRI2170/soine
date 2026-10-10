@@ -64,10 +64,11 @@ class SettingsScreenLayoutTest {
     @Test
     fun settingsScreenCompanionGroupIsQuietPlaceholder() {
         val mainSource = loadMainSettingsSource()
-        // The Companion group is a quiet placeholder for the
-        // future 3D renderer EPIC. It must say "coming
-        // soon" / "next update" so the user does not expect
-        // live options today.
+        // The Companion group explains the V1 contract:
+        // the static 2D fallback is the primary path; the
+        // production 3D asset is in the art pipeline. The
+        // copy is intentionally quiet and never references
+        // the live production asset.
         val companionIdx = mainSource.indexOf("相棒について")
         assertTrue(companionIdx >= 0)
         val companionSlice = mainSource.substring(
@@ -75,8 +76,12 @@ class SettingsScreenLayoutTest {
             mainSource.length,
         )
         assertTrue(
-            "次のアップデート" in companionSlice,
-            "SettingsScreen 相棒について group must say 'coming in the next update' so the user does not expect live options today",
+            "2D" in companionSlice || "姿" in companionSlice,
+            "SettingsScreen 相棒について group must describe the V1 static-fallback voice so the user knows the current state",
+        )
+        assertTrue(
+            "アート" in companionSlice || "パイプライン" in companionSlice,
+            "SettingsScreen 相棒について group must mention the art pipeline so the user knows the production asset is being prepared",
         )
     }
 
