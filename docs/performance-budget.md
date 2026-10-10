@@ -74,6 +74,25 @@ current sizes. A follow-up PR wires a size-diff step into CI that
 fails when any tracked asset grows by > 25 % versus the previous
 release.
 
+The V1 ships the inventory + check scripts as a #184
+deliverable:
+
+- [`scripts/perf-inventory.sh`][perf-inventory-script] —
+  emits `build/perf-inventory.json` with the current
+  release artifact size, the KMP framework size, and
+  the first-party dependency count.
+- [`scripts/perf-budget-check.sh`][perf-budget-script] —
+  reads the inventory and verifies the hard ceilings.
+  Exits non-zero on a violation so a CI step can fail
+  the build.
+- [`app.soine.perf.PerfBudget`][perf-budget-source] —
+  the source-of-truth `PerfBudget.Binary` /
+  `PerfBudget.Dependencies` values. The check script
+  mirrors them; a future contributor who lowers a
+  ceiling must update both. The
+  `PerfBudgetContractTest` pins the values so a
+  drift in either direction fails a unit test.
+
 ## 2. Runtime budget
 
 Targets are measured on a mid-range physical device
@@ -178,3 +197,6 @@ Re-evaluate these budgets when any of the following change:
 [battery-bench]: ./overnight-battery-benchmark.md
 [renderer-fallback-policy]: ../composeApp/src/commonMain/kotlin/app/soine/companion/CompanionStaticFallback.kt
 [proguard-rules]: ../androidApp/proguard-rules.pro
+[perf-inventory-script]: ../scripts/perf-inventory.sh
+[perf-budget-script]: ../scripts/perf-budget-check.sh
+[perf-budget-source]: ../composeApp/src/commonMain/kotlin/app/soine/perf/PerfBudget.kt
