@@ -116,129 +116,19 @@ private fun SleepingScreen(
     companionIntent: CompanionIntent?,
     quietUi: Boolean,
 ) {
-    var timerDialog by remember { mutableStateOf(false) }
-    val startedAt = session.startedAtEpochMillis
-    Column(
-        Modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("おやすみ", style = MaterialTheme.typography.titleMedium)
-                TextButton(
-                    onClick = onOpenSettings,
-                    modifier = Modifier.heightIn(min = AccessibilityPolicy.MIN_TOUCH_TARGET_DP.dp),
-                ) {
-                    Text("設定")
-                }
-            }
-            Spacer(Modifier.height(24.dp))
-            CompanionScene(
-                state = SleepState.SLEEPING,
-                reduceMotion = reduceMotion,
-                intentOverride = companionIntent,
-            )
-            Spacer(Modifier.height(20.dp))
-            Text("一緒に眠っています", style = MaterialTheme.typography.headlineSmall)
-            if (!quietUi) {
-                if (startedAt != null) {
-                    Spacer(Modifier.height(8.dp))
-                    Text("開始済み", style = MaterialTheme.typography.bodyMedium)
-                }
-                Spacer(Modifier.height(16.dp))
-                Text("環境音: " + ambientSoundLabel)
-                remainingTimerLabel?.let { Text("タイマー: " + it) }
-            }
-            Spacer(Modifier.height(12.dp))
-            TextButton(
-                onClick = onToggleAudio,
-                modifier = Modifier.heightIn(min = AccessibilityPolicy.MIN_TOUCH_TARGET_DP.dp),
-            ) {
-                Text(if (audioPlaying) "環境音を一時停止" else "環境音を再生")
-            }
-            TextButton(
-                onClick = { timerDialog = true },
-                modifier = Modifier.heightIn(min = AccessibilityPolicy.MIN_TOUCH_TARGET_DP.dp),
-            ) {
-                Text("スリープタイマーを変更")
-            }
-            if (remainingTimerLabel != null) {
-                TextButton(
-                    onClick = onCancelTimer,
-                    modifier = Modifier.heightIn(min = AccessibilityPolicy.MIN_TOUCH_TARGET_DP.dp),
-                ) {
-                    Text("タイマーを解除")
-                }
-            }
-            Spacer(Modifier.height(16.dp))
-        }
-        SoinePrimaryButton(
-            text = "起きる",
-            onClick = onWake,
-            contentDescription = AccessibilityPolicy.WAKE_CONTENT_DESCRIPTION,
-        )
-    }
-
-    if (timerDialog) {
-        SleepTimerDialog(
-            onDismiss = { timerDialog = false },
-            onSetTimer = {
-                timerDialog = false
-                onSetTimer(it)
-            },
-        )
-    }
-}
-
-@Composable
-private fun SleepTimerDialog(
-    onDismiss: () -> Unit,
-    onSetTimer: (Int) -> Unit,
-) {
-    var custom by remember { mutableStateOf("") }
-    val parsed = custom.toIntOrNull()
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("スリープタイマー") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(30, 60, 90).forEach { minutes ->
-                        OutlinedButton(
-                            onClick = { onSetTimer(minutes) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = AccessibilityPolicy.MIN_TOUCH_TARGET_DP.dp),
-                        ) {
-                            Text(minutes.toString() + "分")
-                        }
-                    }
-                }
-                OutlinedTextField(
-                    value = custom,
-                    onValueChange = { custom = it.filter(Char::isDigit).take(4) },
-                    label = { Text("カスタム（分）") },
-                    singleLine = true,
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { parsed?.takeIf { it > 0 }?.let(onSetTimer) },
-                enabled = parsed != null && parsed > 0,
-            ) { Text("設定") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("キャンセル") } },
+    SleepingScreen(
+        session = session,
+        onWake = onWake,
+        onOpenSettings = onOpenSettings,
+        ambientSoundLabel = ambientSoundLabel,
+        audioPlaying = audioPlaying,
+        remainingTimerLabel = remainingTimerLabel,
+        onToggleAudio = onToggleAudio,
+        onSetTimer = onSetTimer,
+        onCancelTimer = onCancelTimer,
+        reduceMotion = reduceMotion,
+        companionIntent = companionIntent,
+        quietUi = quietUi,
     )
 }
 

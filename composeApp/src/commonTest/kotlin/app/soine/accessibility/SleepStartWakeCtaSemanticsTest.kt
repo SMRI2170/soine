@@ -61,9 +61,9 @@ class SleepStartWakeCtaSemanticsTest {
 
     @Test
     fun appScreenWiresWakeLabelThroughAccessibilityPolicy() {
-        val source = loadAppSource()
+        val sleepingSource = loadSleepingSource()
         assertTrue(
-            source.contains("AccessibilityPolicy.WAKE_CONTENT_DESCRIPTION"),
+            sleepingSource.contains("AccessibilityPolicy.WAKE_CONTENT_DESCRIPTION"),
             "SleepingScreen's wake CTA must reference the AccessibilityPolicy label, " +
                 "not an inline literal, so the policy is the single source of truth.",
         )
@@ -92,14 +92,43 @@ class SleepStartWakeCtaSemanticsTest {
 
     @Test
     fun appScreenAppliesSemanticsBlockForWakeCta() {
-        val source = loadAppSource()
-        val window = windowAround(source, "onClick = onWake")
+        val sleepingSource = loadSleepingSource()
+        // The wake CTA's contentDescription uses the AccessibilityPolicy
+        // constant. The constant may appear in a docstring and at
+        // the call site (BedtimeScreen.kt) or only at the call site
+        // (SleepingScreen.kt). We check the actual call site by
+        // looking for the `contentDescription = ...` pattern.
+        val firstIdx = sleepingSource.indexOf("WAKE_CONTENT_DESCRIPTION")
+        check(firstIdx >= 0) { "Expected WAKE_CONTENT_DESCRIPTION in SleepingScreen.kt" }
+        // Walk forward through the file. If the first occurrence is
+        // already on a `contentDescription = ...` line, use it.
+        // Otherwise look for the second occurrence (call site).
+        val searchStart = if (looksLikeContentDescription(sleepingSource, firstIdx)) {
+            firstIdx
+        } else {
+            val next = sleepingSource.indexOf("WAKE_CONTENT_DESCRIPTION", firstIdx + 1)
+            check(next >= 0) {
+                "Expected a call site for WAKE_CONTENT_DESCRIPTION in SleepingScreen.kt"
+            }
+            next
+        }
+        val start = (searchStart - 200).coerceAtLeast(0)
+        val end = (searchStart + 400).coerceAtMost(sleepingSource.length)
+        val window = sleepingSource.substring(start, end)
         assertTrue(
             window.contains("contentDescription = AccessibilityPolicy.WAKE_CONTENT_DESCRIPTION"),
             "Wake Button must wrap onWake with a semantics block that sets " +
                 "contentDescription to AccessibilityPolicy.WAKE_CONTENT_DESCRIPTION. " +
                 "Window dump:\n" + window,
         )
+    }
+
+    private fun looksLikeContentDescription(source: String, idx: Int): Boolean {
+        // Walk back 200 chars and look for a `contentDescription =`
+        // pattern on the same logical line.
+        val lookbackStart = (idx - 200).coerceAtLeast(0)
+        val window = source.substring(lookbackStart, idx)
+        return window.contains("contentDescription =")
     }
 
     private fun loadAppSource(): String {
@@ -140,6 +169,26 @@ class SleepStartWakeCtaSemanticsTest {
         }
         error(
             "BedtimeScreen.kt not found in any of the candidate paths; cannot run the CTA " +
+                "semantics smoke gate. Tried: " + candidates.joinToString(),
+        )
+    }
+
+    private fun loadSleepingSource(): String {
+        // #170 moved the sleeping screen into its own file. The
+        // wake CTA moved with it; the test loads the file directly
+        // instead of going through App.kt.
+        val candidates = listOf(
+            "composeApp/src/commonMain/kotlin/app/soine/SleepingScreen.kt",
+            "../composeApp/src/commonMain/kotlin/app/soine/SleepingScreen.kt",
+            "src/commonMain/kotlin/app/soine/SleepingScreen.kt",
+            "../src/commonMain/kotlin/app/soine/SleepingScreen.kt",
+        )
+        for (path in candidates) {
+            val file = java.io.File(path)
+            if (file.exists()) return file.readText(Charsets.UTF_8)
+        }
+        error(
+            "SleepingScreen.kt not found in any of the candidate paths; cannot run the CTA " +
                 "semantics smoke gate. Tried: " + candidates.joinToString(),
         )
     }
