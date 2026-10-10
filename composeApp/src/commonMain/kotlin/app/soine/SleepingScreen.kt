@@ -1,6 +1,5 @@
 package app.soine
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -48,6 +47,8 @@ import app.soine.design.SoinePrimaryButton
 import app.soine.design.SoineQuietButton
 import app.soine.design.SoineSectionHeader
 import app.soine.design.SoineTokens
+import app.soine.motion.SoineAnimatedVisibility
+import app.soine.motion.SoineAnimatedVisibilityVertical
 import app.soine.sleep.SleepSession
 import app.soine.sleep.SleepState
 import kotlinx.coroutines.delay
@@ -133,6 +134,7 @@ fun SleepingScreen(
             audioPlaying = audioPlaying,
             remainingTimerLabel = remainingTimerLabel,
             isVisible = isRevealed,
+            reduceMotion = reduceMotion,
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = SoineTokens.SpacingLg),
@@ -149,10 +151,9 @@ fun SleepingScreen(
                 .padding(bottom = SoineTokens.SpacingLg),
             verticalArrangement = Arrangement.spacedBy(SoineTokens.SpacingSm),
         ) {
-            AnimatedVisibility(
+            SoineAnimatedVisibilityVertical(
                 visible = isRevealed,
-                enter = fadeIn(),
-                exit = fadeOut(),
+                reduceMotion = reduceMotion,
             ) {
                 SecondaryControls(
                     onOpenSettings = onOpenSettings,
@@ -168,6 +169,7 @@ fun SleepingScreen(
                 text = "起きる",
                 onClick = onWake,
                 contentDescription = AccessibilityPolicy.WAKE_CONTENT_DESCRIPTION,
+                reduceMotion = reduceMotion,
             )
         }
     }
@@ -253,16 +255,16 @@ private fun StatusIndicator(
     audioPlaying: Boolean,
     remainingTimerLabel: String?,
     isVisible: Boolean,
+    reduceMotion: Boolean,
     modifier: Modifier = Modifier,
 ) {
     // Two compact indicators in a top row. Each is a single dot
     // with a label. The label is the screen-reader content
     // description; the visual is a small filled circle.
-    AnimatedVisibility(
+    SoineAnimatedVisibility(
         visible = isVisible,
-        enter = fadeIn(),
-        exit = fadeOut(),
         modifier = modifier,
+        reduceMotion = reduceMotion,
     ) {
         Row(
             modifier = Modifier
