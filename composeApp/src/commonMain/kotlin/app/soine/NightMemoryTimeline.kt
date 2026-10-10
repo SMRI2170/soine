@@ -1,7 +1,6 @@
 package app.soine
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -12,6 +11,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import app.soine.design.SoinePanel
+import app.soine.design.SoineTokens
 import app.soine.night.InitialNightEventCatalog
 import app.soine.night.NightEvent
 import app.soine.night.NightEventAnimationIntent
@@ -85,10 +86,10 @@ private fun NightEventType.toTimelineGlyph(): String = when (this) {
 fun NightMemoryTimeline(entries: List<NightMemoryEntry>) {
     if (entries.isEmpty()) return
 
-    Card(Modifier.fillMaxWidth()) {
+    SoinePanel {
         Column(
-            Modifier.fillMaxWidth().padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(SoineTokens.SpacingMd),
         ) {
             Text(
                 "昨夜の記憶",

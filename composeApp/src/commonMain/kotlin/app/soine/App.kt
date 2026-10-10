@@ -13,6 +13,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.soine.accessibility.AccessibilityPolicy
+import app.soine.design.SoinePrimaryButton
+import app.soine.design.SoineQuietButton
+import app.soine.design.SoineTheme
 import app.soine.navigation.BedtimeDestination
 import app.soine.companion.CompanionIntent
 import app.soine.companion.CompanionRenderRequest
@@ -43,7 +46,7 @@ fun App(
     onSetTimer: (Int) -> Unit,
     onCancelTimer: () -> Unit,
 ) {
-    MaterialTheme {
+    SoineTheme {
         Surface(Modifier.fillMaxSize()) {
             when (destination) {
                 BedtimeDestination.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
@@ -150,14 +153,11 @@ private fun BedtimeScreen(
             }
             Spacer(Modifier.height(16.dp))
         }
-        Button(
+        SoinePrimaryButton(
+            text = "一緒に寝る",
             onClick = onStartSleep,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 56.dp)
-                .semantics { contentDescription = AccessibilityPolicy.SLEEP_START_CONTENT_DESCRIPTION },
-            shape = RoundedCornerShape(18.dp),
-        ) { Text("一緒に寝る") }
+            contentDescription = AccessibilityPolicy.SLEEP_START_CONTENT_DESCRIPTION,
+        )
     }
 }
 
@@ -242,14 +242,11 @@ private fun SleepingScreen(
             }
             Spacer(Modifier.height(16.dp))
         }
-        OutlinedButton(
+        SoinePrimaryButton(
+            text = "起きる",
             onClick = onWake,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 56.dp)
-                .semantics { contentDescription = AccessibilityPolicy.WAKE_CONTENT_DESCRIPTION },
-            shape = RoundedCornerShape(18.dp),
-        ) { Text("起きる") }
+            contentDescription = AccessibilityPolicy.WAKE_CONTENT_DESCRIPTION,
+        )
     }
 
     if (timerDialog) {
@@ -346,14 +343,11 @@ private fun MorningSummaryScreen(
             }
             Spacer(Modifier.height(16.dp))
         }
-        Button(
+        SoinePrimaryButton(
+            text = "今日をはじめる",
             onClick = onDone,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 56.dp)
-                .semantics { contentDescription = "朝の記録を閉じて今日を始める" },
-            shape = RoundedCornerShape(18.dp),
-        ) { Text("今日をはじめる") }
+            contentDescription = "朝の記録を閉じて今日を始める",
+        )
     }
 }
 
