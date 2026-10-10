@@ -57,6 +57,7 @@ Start here when implementing Soine.
 - dream-album-redesign.md — V1 Dream Album as a visual collection, per-dream gradient + motif, immersive sheet detail, no loot-box pressure ([#172][issue-172])
 - relationship-presentation.md — V1 relationship-stage visual presentation, single source of truth for bedtime / sleeping / morning visuals, no XP / level / number ([#175][issue-175])
 - settings-ia.md — V1 Settings & Privacy information architecture, five named groups (Sleep / Companion / Optional / Privacy / About), destructive action behind navigation ([#176][issue-176])
+- motion-language.md — V1 motion language, single source of truth for duration / easing / reduce-motion, SoineAnimatedVisibility wrapper, button press feedback, haptics at meaningful moments ([#177][issue-177])
 
 ## Decisions
 - decisions/0001-kmp-app-shell.md
@@ -76,6 +77,7 @@ Start here when implementing Soine.
 [issue-172]: https://github.com/SMRI2170/soine/issues/172
 [issue-175]: https://github.com/SMRI2170/soine/issues/175
 [issue-176]: https://github.com/SMRI2170/soine/issues/176
+[issue-177]: https://github.com/SMRI2170/soine/issues/177
 [issue-193]: https://github.com/SMRI2170/soine/issues/193
 [issue-194]: https://github.com/SMRI2170/soine/issues/194
 [issue-195]: https://github.com/SMRI2170/soine/issues/195

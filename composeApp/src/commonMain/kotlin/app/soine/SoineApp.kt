@@ -18,6 +18,8 @@ import app.soine.dream.DreamDiscovery
 import app.soine.dream.DreamDiscoveryCoordinator
 import app.soine.dream.DreamDiscoveryRepository
 import app.soine.dream.InitialDreamCatalog
+import app.soine.motion.HapticsIntensity
+import app.soine.motion.rememberHaptics
 import app.soine.navigation.*
 import app.soine.night.InitialNightEventCatalog
 import app.soine.night.NightEventEngineInput
@@ -114,6 +116,7 @@ fun SoineApp(
     }
     var bedtimeSignatureState by remember { mutableStateOf<BedtimeSignatureState?>(null) }
     var bedtimeSignatureJob by remember { mutableStateOf<Job?>(null) }
+    val haptics = rememberHaptics()
     var microphonePermissionState by remember(microphonePermissionController) {
         mutableStateOf(microphonePermissionController.state)
     }
@@ -426,6 +429,12 @@ fun SoineApp(
                         previousRelationshipStage = relationshipStage
                         val next = controller.start()
                         destination = next
+                        // Sleep-start is a meaningful moment —
+                        // the user is committing to a night.
+                        // A light haptic confirms the start
+                        // without competing with the
+                        // companion motion.
+                        haptics.perform(HapticsIntensity.Light)
                         if (next is BedtimeDestination.Sleeping) {
                             analytics?.onSleepStarted(next.session.id)
                             if (
@@ -486,12 +495,28 @@ fun SoineApp(
                         refreshAudioPreferences()
                         val next = controller.finish()
                         destination = next
+                        // Wake is a meaningful moment — the
+                        // user is returning from a night. A
+                        // light haptic confirms the
+                        // transition before the morning
+                        // screen renders.
+                        haptics.perform(HapticsIntensity.Light)
                         if (next is BedtimeDestination.Morning) {
                             analytics?.onSleepCompleted(next.session.id)
                             analytics?.onDestinationReached(next)
                             try {
+                                val previousDiscoveryCount = dreamDiscoveries.size
                                 dreamCoordinator.evaluateIfNeeded(next.session)
                                 dreamDiscoveries = dreamCoordinator.discoveries()
+                                // A new dream discovery is a
+                                // medium-strength moment: the
+                                // user found something. The
+                                // haptic fires once per
+                                // discovery, not once per
+                                // session.
+                                if (dreamDiscoveries.size > previousDiscoveryCount) {
+                                    haptics.perform(HapticsIntensity.Medium)
+                                }
                             } catch (_: Throwable) {
                                 // The completed sleep session remains valid even if dream storage fails.
                             }
