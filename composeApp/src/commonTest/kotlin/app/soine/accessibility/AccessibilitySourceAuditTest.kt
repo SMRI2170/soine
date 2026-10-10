@@ -29,13 +29,20 @@ class AccessibilitySourceAuditTest {
 
     @Test
     fun appScreenHasSleepStartAndWakeContentDescriptions() {
-        val source = loadSource("composeApp/src/commonMain/kotlin/app/soine/App.kt")
+        val bedtimeSource = loadSource("composeApp/src/commonMain/kotlin/app/soine/BedtimeScreen.kt")
+        val appSource = loadSource("composeApp/src/commonMain/kotlin/app/soine/App.kt")
+        // #169 moved the bedtime screen into its own file. The
+        // accessibility contract still pins the constants; the
+        // audit checks the bedtime file for the sleep-start label
+        // and the app file (which still hosts the sleeping /
+        // morning screens) for the wake label.
+        val combined = bedtimeSource + "\n" + appSource
         assertTrue(
-            source.contains("AccessibilityPolicy.SLEEP_START_CONTENT_DESCRIPTION"),
+            combined.contains("AccessibilityPolicy.SLEEP_START_CONTENT_DESCRIPTION"),
             "BedtimeScreen must wire the sleep-start CTA to AccessibilityPolicy.SLEEP_START_CONTENT_DESCRIPTION.",
         )
         assertTrue(
-            source.contains("AccessibilityPolicy.WAKE_CONTENT_DESCRIPTION"),
+            combined.contains("AccessibilityPolicy.WAKE_CONTENT_DESCRIPTION"),
             "SleepingScreen must wire the wake CTA to AccessibilityPolicy.WAKE_CONTENT_DESCRIPTION.",
         )
     }

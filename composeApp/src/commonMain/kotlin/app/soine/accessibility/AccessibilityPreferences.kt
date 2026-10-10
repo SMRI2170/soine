@@ -60,4 +60,16 @@ object AccessibilityPolicy {
      * block so TalkBack / VoiceOver can announce the action.
      */
     const val SETTINGS_REPLAY_ONBOARDING_CONTENT_DESCRIPTION: String = "オンボーディングをもう一度見る"
+
+    /**
+     * Accessibility label for the bedtime "夢のアルバム" quiet
+     * button. The BedtimeScreen top navigation must apply this
+     * string via a `semantics { contentDescription = ... }` block.
+     */
+    const val BEDTIME_DREAM_ALBUM_CONTENT_DESCRIPTION: String = "夢のアルバムを開く"
+
+    /**
+     * Accessibility label for the bedtime "設定" quiet button.
+     */
+    const val BEDTIME_SETTINGS_CONTENT_DESCRIPTION: String = "設定を開く"
 }

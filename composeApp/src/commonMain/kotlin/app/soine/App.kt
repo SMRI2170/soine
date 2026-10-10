@@ -13,6 +13,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.soine.accessibility.AccessibilityPolicy
+import app.soine.companion.CompanionRelationshipStage
 import app.soine.design.SoinePrimaryButton
 import app.soine.design.SoineQuietButton
 import app.soine.design.SoineTheme
@@ -45,6 +46,7 @@ fun App(
     onToggleAudio: () -> Unit,
     onSetTimer: (Int) -> Unit,
     onCancelTimer: () -> Unit,
+    relationshipStage: CompanionRelationshipStage = CompanionRelationshipStage.NEW,
 ) {
     SoineTheme {
         Surface(Modifier.fillMaxSize()) {
@@ -57,6 +59,7 @@ fun App(
                     ambientSoundLabel = ambientSoundLabel,
                     defaultTimerLabel = defaultTimerLabel,
                     reduceMotion = reduceMotion,
+                    relationshipStage = relationshipStage,
                 )
                 is BedtimeDestination.Sleeping -> SleepingScreen(
                     session = destination.session.toUiSession(),
@@ -97,69 +100,6 @@ private fun SleepSessionRecord.toUiSession() = SleepSession(
     startedAtEpochMillis = startedAtEpochMillis,
     endedAtEpochMillis = endedAtEpochMillis,
 )
-
-@Composable
-private fun BedtimeScreen(
-    onStartSleep: () -> Unit,
-    onOpenDreamAlbum: () -> Unit,
-    onOpenSettings: () -> Unit,
-    ambientSoundLabel: String,
-    defaultTimerLabel: String,
-    reduceMotion: Boolean,
-) {
-    Column(
-        Modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("soine", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
-                Row {
-                    TextButton(
-                        onClick = onOpenDreamAlbum,
-                        modifier = Modifier.heightIn(min = AccessibilityPolicy.MIN_TOUCH_TARGET_DP.dp),
-                    ) { Text("夢のアルバム") }
-                    TextButton(
-                        onClick = onOpenSettings,
-                        modifier = Modifier.heightIn(min = AccessibilityPolicy.MIN_TOUCH_TARGET_DP.dp),
-                    ) { Text("設定") }
-                }
-            }
-            Spacer(Modifier.height(28.dp))
-            CompanionScene(SleepState.READY, reduceMotion)
-            Spacer(Modifier.height(20.dp))
-            Text("今日も一緒に眠ろう", style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(8.dp))
-            Text("音や計測を設定しなくても、そのまま始められます")
-            Spacer(Modifier.height(24.dp))
-            OutlinedCard(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("環境音", fontWeight = FontWeight.Medium)
-                    Text(ambientSoundLabel)
-                    Spacer(Modifier.height(12.dp))
-                    Text("スリープタイマー", fontWeight = FontWeight.Medium)
-                    Text(defaultTimerLabel)
-                }
-            }
-            Spacer(Modifier.height(16.dp))
-        }
-        SoinePrimaryButton(
-            text = "一緒に寝る",
-            onClick = onStartSleep,
-            contentDescription = AccessibilityPolicy.SLEEP_START_CONTENT_DESCRIPTION,
-        )
-    }
-}
 
 @Composable
 private fun SleepingScreen(
