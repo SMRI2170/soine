@@ -50,6 +50,7 @@ Start here when implementing Soine.
 - testing-strategy.md — release quality
 - timezone.md — absolute time, LocalTimeZone / DisplayFormatter boundary, wall-clock safety ([#196][issue-196])
 - onboarding.md — permission-free first-run flow, replay, analytics funnel ([#194][issue-194])
+- design-system.md — V1 color / type / spacing / radius tokens and components ([#168][issue-168])
 
 ## Decisions
 - decisions/0001-kmp-app-shell.md
@@ -62,6 +63,7 @@ Start here when implementing Soine.
 [issue-182]: https://github.com/SMRI2170/soine/issues/182
 [issue-181]: https://github.com/SMRI2170/soine/issues/181
 [issue-183]: https://github.com/SMRI2170/soine/issues/183
+[issue-168]: https://github.com/SMRI2170/soine/issues/168
 [issue-193]: https://github.com/SMRI2170/soine/issues/193
 [issue-194]: https://github.com/SMRI2170/soine/issues/194
 [issue-195]: https://github.com/SMRI2170/soine/issues/195
