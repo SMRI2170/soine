@@ -1,0 +1,174 @@
+package app.soine
+
+import app.soine.accessibility.AccessibilityPolicy
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+
+/**
+ * Smoke test for the V1 morning screen layout contract.
+ *
+ * #171 requires:
+ *
+ *   - sleep duration が最初の hero 情報ではない — the
+ *     companion + morning greeting are the hero; the duration
+ *     sits in a small summary card
+ *   - night memory が glyph + text だけで終わらない — the night
+ *     memory timeline uses the existing visual cards; the
+ *     morning screen does not regress to a glyph-only list
+ *   - dream 発見時に「見つけた感」がある — the special reveal
+ *     panel surfaces above the night memory
+ *   - morning flow が長すぎず 1 画面 〜 短い scroll で完結 —
+ *     the layout fits in a single vertical column with
+ *     verticalScroll
+ *
+ * Compose UI rendering is still deferred (see
+ * `docs/ci-quality-policy.md`); the textual / source checks here
+ * cover the contract.
+ */
+class MorningScreenLayoutTest {
+
+    @Test
+    fun morningScreenUsesDesignSystem() {
+        val source = loadMorningSource()
+        assertTrue(
+            source.contains("SoinePrimaryButton"),
+            "MorningScreen must use SoinePrimaryButton for the close CTA",
+        )
+        assertTrue(
+            source.contains("SoinePanel"),
+            "MorningScreen must use SoinePanel for the summary / dream reveal cards",
+        )
+        assertTrue(
+            source.contains("SoineSectionHeader"),
+            "MorningScreen must use SoineSectionHeader for sub-section labels",
+        )
+    }
+
+    @Test
+    fun morningScreenReusesCompanionSceneContent() {
+        val source = loadMorningSource()
+        assertTrue(
+            source.contains("CompanionSceneContent"),
+            "MorningScreen must call CompanionSceneContent for the hero wake scene",
+        )
+    }
+
+    @Test
+    fun morningScreenEmotionBeforeData() {
+        val source = loadMorningSource()
+        // The "おはよう" / morning greeting is the first hero
+        // text. The duration comes after the night memory and
+        // the dream reveal so the user's eye lands on the
+        // emotion first.
+        // We anchor on the greeting render call (`text =
+        // morningGreeting,`) and the summary call site so we
+        // measure where the panels actually appear in the
+        // MorningScreen body, not where the helper functions
+        // or constants are declared.
+        val greetingIdx = source.indexOf("text = morningGreeting,")
+        val summaryIdx = source.indexOf("SummaryCard(summary = summary)")
+        assertTrue(
+            greetingIdx >= 0,
+            "MorningScreen must render the morning greeting",
+        )
+        assertTrue(
+            summaryIdx >= 0,
+            "MorningScreen must render the summary card",
+        )
+        assertTrue(
+            greetingIdx < summaryIdx,
+            "Morning greeting must come before the summary card (Emotion before Data)",
+        )
+    }
+
+    @Test
+    fun morningScreenDreamDiscoveryRevealPrecedesNightMemory() {
+        val source = loadMorningSource()
+        // The dream reveal must come before the night memory so
+        // the "見つけた" feeling lands first. We anchor on the
+        // call sites (not the helper function definitions or
+        // the panel's internal copy) so we measure where the
+        // panels actually appear in the MorningScreen body.
+        val dreamIdx = source.indexOf("DreamDiscoveryReveal(")
+        val nightIdx = source.indexOf("NightMemoryTimeline(nightMemoryEntries)")
+        assertTrue(
+            dreamIdx >= 0,
+            "MorningScreen must render the dream discovery reveal",
+        )
+        assertTrue(
+            nightIdx >= 0,
+            "MorningScreen must render the night memory timeline",
+        )
+        assertTrue(
+            dreamIdx < nightIdx,
+            "Dream discovery reveal must come before the night memory timeline",
+        )
+    }
+
+    @Test
+    fun morningScreenCtaIsAnchored() {
+        val source = loadMorningSource()
+        assertTrue(
+            source.contains("AccessibilityPolicy.MORNING_DONE_CONTENT_DESCRIPTION"),
+            "MorningScreen must wire the close CTA to AccessibilityPolicy.MORNING_DONE_CONTENT_DESCRIPTION",
+        )
+    }
+
+    @Test
+    fun morningScreenDefaultGreetingIsStable() {
+        val source = loadMorningSource()
+        assertTrue(
+            source.contains("const val DEFAULT_MORNING_GREETING: String = \"今日も一緒に起きられたね\""),
+            "MorningScreen must default the morning greeting to \"今日も一緒に起きられたね\"",
+        )
+    }
+
+    @Test
+    fun morningScreenDefaultsToNoDiscoveries() {
+        val source = loadMorningSource()
+        // The default empty list keeps the morning screen
+        // rendering even when the dream coordinator has not
+        // produced any discoveries yet.
+        assertTrue(
+            source.contains("dreamDiscoveries: List<DreamDiscovery> = emptyList()"),
+            "MorningScreen must default dreamDiscoveries to emptyList()",
+        )
+    }
+
+    @Test
+    fun morningScreenTouchTargetsMeetBaseline() {
+        val source = loadMorningSource()
+        // SoinePrimaryButton enforces the 56dp touch target.
+        // The morning screen does not re-declare it.
+        assertTrue(
+            !source.contains("heightIn(min = ") || source.contains("MIN_TOUCH_TARGET_DP"),
+            "MorningScreen must use the design-system touch-target tokens, not raw dp values",
+        )
+    }
+
+    @Test
+    fun morningScreenDefaultGreetingConstantExposed() {
+        assertEquals(
+            "今日も一緒に起きられたね",
+            app.soine.DEFAULT_MORNING_GREETING,
+        )
+    }
+
+    private fun loadMorningSource(): String {
+        val candidates = listOf(
+            "composeApp/src/commonMain/kotlin/app/soine/MorningScreen.kt",
+            "../composeApp/src/commonMain/kotlin/app/soine/MorningScreen.kt",
+            "src/commonMain/kotlin/app/soine/MorningScreen.kt",
+            "../src/commonMain/kotlin/app/soine/MorningScreen.kt",
+        )
+        for (path in candidates) {
+            val file = java.io.File(path)
+            if (file.exists()) return file.readText(Charsets.UTF_8)
+        }
+        error(
+            "MorningScreen.kt not found in any of the candidate paths; tried: " +
+                candidates.joinToString(),
+        )
+    }
+}

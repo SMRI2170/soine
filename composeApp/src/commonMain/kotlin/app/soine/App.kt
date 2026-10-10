@@ -17,6 +17,7 @@ import app.soine.companion.CompanionRelationshipStage
 import app.soine.design.SoinePrimaryButton
 import app.soine.design.SoineQuietButton
 import app.soine.design.SoineTheme
+import app.soine.dream.DreamDiscovery
 import app.soine.navigation.BedtimeDestination
 import app.soine.companion.CompanionIntent
 import app.soine.companion.CompanionRenderRequest
@@ -36,6 +37,7 @@ fun App(
     onOpenDreamAlbum: () -> Unit,
     onOpenSettings: () -> Unit,
     nightMemoryEntries: List<NightMemoryEntry> = emptyList(),
+    discoveries: List<DreamDiscovery> = emptyList(),
     sleepingCompanionIntent: CompanionIntent? = null,
     quietSleepUi: Boolean = false,
     reduceMotion: Boolean = false,
@@ -80,6 +82,7 @@ fun App(
                     nightMemoryEntries = nightMemoryEntries,
                     reduceMotion = reduceMotion,
                     onDone = onDone,
+                    dreamDiscoveries = discoveries,
                 )
                 is BedtimeDestination.Error -> Column(
                     Modifier.fillMaxSize().padding(24.dp),
@@ -138,47 +141,15 @@ private fun MorningSummaryScreen(
     nightMemoryEntries: List<NightMemoryEntry>,
     reduceMotion: Boolean,
     onDone: () -> Unit,
+    dreamDiscoveries: List<DreamDiscovery> = emptyList(),
 ) {
-    val summary = session.summary()
-    Column(
-        Modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text("おはよう", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(16.dp))
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            CompanionScene(SleepState.FINISHED, reduceMotion)
-            Spacer(Modifier.height(16.dp))
-            Text("今日も一緒に起きられたね", style = MaterialTheme.typography.headlineSmall)
-            if (nightMemoryEntries.isNotEmpty()) {
-                Spacer(Modifier.height(24.dp))
-                NightMemoryTimeline(nightMemoryEntries)
-            }
-            Spacer(Modifier.height(16.dp))
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(20.dp)) {
-                    Text("睡眠時間", fontWeight = FontWeight.SemiBold)
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        summary?.displayDuration() ?: "記録なし",
-                        style = MaterialTheme.typography.headlineMedium,
-                    )
-                }
-            }
-            Spacer(Modifier.height(16.dp))
-        }
-        SoinePrimaryButton(
-            text = "今日をはじめる",
-            onClick = onDone,
-            contentDescription = "朝の記録を閉じて今日を始める",
-        )
-    }
+    MorningScreen(
+        session = session,
+        nightMemoryEntries = nightMemoryEntries,
+        reduceMotion = reduceMotion,
+        onDone = onDone,
+        dreamDiscoveries = dreamDiscoveries,
+    )
 }
 
 @Composable
