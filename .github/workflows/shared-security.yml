@@ -13,6 +13,6 @@ concurrency:
   cancel-in-progress: true
 jobs:
   security:
-    uses: SMRI2170/SMRI2170/.github/workflows/reusable-security.yml@02c792695426aed3e45333abf64d2fc3de9a505f
+    uses: SMRI2170/SMRI2170/.github/workflows/reusable-security.yml@7cdeb265e17900c8475685198d19ff029bd51cda
     permissions:
       contents: read
