@@ -45,7 +45,8 @@
         "kotlin"
       ],
       "commitMessageTopic": "kotlin",
-      "reviewers": []
+      "reviewers": [],
+      "minimumReleaseAge": "7 days"
     },
     {
       "description": "Compose Multiplatform is updated independently so regressions are easy to bisect.",
@@ -70,7 +71,8 @@
         "deps",
         "compose"
       ],
-      "commitMessageTopic": "compose"
+      "commitMessageTopic": "compose",
+      "minimumReleaseAge": "7 days"
     },
     {
       "description": "Android Gradle Plugin updates are isolated because they touch the whole build.",
@@ -95,7 +97,8 @@
         "deps",
         "agp"
       ],
-      "commitMessageTopic": "agp"
+      "commitMessageTopic": "agp",
+      "minimumReleaseAge": "7 days"
     },
     {
       "description": "AndroidX runtime libraries are reviewed by humans.",
@@ -119,7 +122,8 @@
         "deps",
         "androidx"
       ],
-      "commitMessageTopic": "androidx"
+      "commitMessageTopic": "androidx",
+      "minimumReleaseAge": "7 days"
     },
     {
       "description": "Test-only dependencies can be batched and auto-merged for patch updates.",
@@ -150,7 +154,8 @@
         "deps",
         "test"
       ],
-      "commitMessageTopic": "test deps"
+      "commitMessageTopic": "test deps",
+      "minimumReleaseAge": "7 days"
     },
     {
       "description": "GitHub Actions are grouped per-action so each pin change is its own PR.",
@@ -164,7 +169,8 @@
         "deps",
         "github-actions"
       ],
-      "commitMessageTopic": "actions"
+      "commitMessageTopic": "actions",
+      "minimumReleaseAge": "7 days"
     }
   ],
   "vulnerabilityAlerts": {

@@ -10,6 +10,8 @@
     <application
         android:label="Soine"
         android:theme="@style/AppTheme">
+        <!-- Public MAIN/LAUNCHER is required for app launch; privileged services remain non-exported. -->
+        <!-- nosemgrep: java.android.security.exported_activity.exported_activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true">

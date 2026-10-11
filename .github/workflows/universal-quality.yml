@@ -1,0 +1,27 @@
+name: Universal quality and security
+# Central checks are commit-SHA-pinned; project build checks remain separate.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 2 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+  actions: read
+
+concurrency:
+  group: universal-quality-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    uses: SMRI2170/SMRI2170/.github/workflows/reusable-quality.yml@e2eb51b805e13d6329a0197243d4d1e54fed1018
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: read
