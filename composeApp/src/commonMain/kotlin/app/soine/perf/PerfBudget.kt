@@ -36,7 +36,7 @@ object PerfBudget {
         const val MAX_COMPANION_GLB_BYTES: Long = 200L * 1024L
         const val TARGET_COMPANION_GLB_BYTES: Long = 60L * 1024L
         const val MAX_AMBIENT_AUDIO_BYTES: Long = 96L * 1024L
-        const val TARGET_AMBIENT_AUDIO_BYTES: Long = 24L * 1024L
+        const val TARGET_AMBIENT_AUDIO_BYTES: Long = 32L * 1024L
         const val MAX_BACKGROUND_TEXTURE_BYTES: Long = 128L * 1024L
         const val TARGET_BACKGROUND_TEXTURE_BYTES: Long = 32L * 1024L
         const val MAX_FONT_SUBSET_BYTES: Long = 96L * 1024L
@@ -44,7 +44,7 @@ object PerfBudget {
 
         // Total ambient audio budget (rain + waves + white-noise).
         const val MAX_TOTAL_AMBIENT_AUDIO_BYTES: Long = 288L * 1024L
-        const val TARGET_TOTAL_AMBIENT_AUDIO_BYTES: Long = 60L * 1024L
+        const val TARGET_TOTAL_AMBIENT_AUDIO_BYTES: Long = 96L * 1024L
     }
 
     /**

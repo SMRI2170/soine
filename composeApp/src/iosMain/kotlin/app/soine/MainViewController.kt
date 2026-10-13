@@ -35,9 +35,9 @@ fun MainViewController() = ComposeUIViewController {
     val overnightSoundAnalysisController = IosOvernightSoundAnalysisController()
     val audioController = IosAmbientAudioController { sound ->
         when (sound.id) {
-            "rain" -> "ambient_rain.wav"
-            "waves" -> "ambient_waves.wav"
-            "white-noise" -> "ambient_white_noise.wav"
+            "rain" -> "ambient_rain.mp3"
+            "waves" -> "ambient_waves.mp3"
+            "white-noise" -> "ambient_white_noise.mp3"
             else -> null
         }
     }

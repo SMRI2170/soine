@@ -1,6 +1,6 @@
 {
   "$schema-note": "Reference inventory for binary / asset size tracking. Values are the current sizes on main; CI should diff against the previous release manifest and fail when any value grows by more than 25 percent. See docs/performance-budget.md.",
-  "version": "2026-10-07",
+  "version": "2026-10-13",
   "assets": [
     {
       "id": "companion_glb",
@@ -13,63 +13,63 @@
     },
     {
       "id": "ambient_rain_android",
-      "path": "androidApp/src/main/res/raw/ambient_rain.wav",
+      "path": "androidApp/src/main/res/raw/ambient_rain.mp3",
       "kind": "audio",
-      "sizeBytes": 96044,
+      "sizeBytes": 32400,
       "budgetBytes": 20480,
       "hardCeilingBytes": 96044,
       "platform": "android",
-      "notes": "WAV. Should be re-encoded to OGG Vorbis / AAC; see performance-budget.md."
+      "notes": "MP3 mono 32 kbps, 16 kHz, 8.1 s loop. Algorithmically synthesized pink-noise rain with sparse high-frequency droplet taps. No vocals, no music. Source: scripts-removed; deterministic seed."
     },
     {
       "id": "ambient_waves_android",
-      "path": "androidApp/src/main/res/raw/ambient_waves.wav",
+      "path": "androidApp/src/main/res/raw/ambient_waves.mp3",
       "kind": "audio",
-      "sizeBytes": 96044,
+      "sizeBytes": 32400,
       "budgetBytes": 20480,
       "hardCeilingBytes": 96044,
       "platform": "android",
-      "notes": "WAV. Should be re-encoded to OGG Vorbis / AAC; see performance-budget.md."
+      "notes": "MP3 mono 32 kbps, 16 kHz, 8.1 s loop. Algorithmically synthesized slow ocean swell (1.2 kHz low-passed pink noise under a 4 s asymmetric swell+decay envelope, 2 cycles per loop). No vocals, no music. Seamless loop boundary."
     },
     {
       "id": "ambient_white_noise_android",
-      "path": "androidApp/src/main/res/raw/ambient_white_noise.wav",
+      "path": "androidApp/src/main/res/raw/ambient_white_noise.mp3",
       "kind": "audio",
-      "sizeBytes": 96044,
+      "sizeBytes": 32400,
       "budgetBytes": 20480,
       "hardCeilingBytes": 96044,
       "platform": "android",
-      "notes": "WAV. Should be re-encoded to OGG Vorbis / AAC; see performance-budget.md."
+      "notes": "MP3 mono 32 kbps, 16 kHz, 8.1 s loop. Algorithmically synthesized uniform white noise with light 6.5 kHz low-pass. No vocals, no music."
     },
     {
       "id": "ambient_rain_ios",
-      "path": "iosApp/iosApp/Resources/ambient_rain.wav",
+      "path": "iosApp/iosApp/Resources/ambient_rain.mp3",
       "kind": "audio",
-      "sizeBytes": 96044,
+      "sizeBytes": 32400,
       "budgetBytes": 20480,
       "hardCeilingBytes": 96044,
       "platform": "ios",
-      "notes": "WAV. Should be re-encoded to AAC; see performance-budget.md."
+      "notes": "MP3 mono 32 kbps, 16 kHz, 8.1 s loop. Algorithmically synthesized pink-noise rain with sparse high-frequency droplet taps. No vocals, no music. Source: scripts-removed; deterministic seed."
     },
     {
       "id": "ambient_waves_ios",
-      "path": "iosApp/iosApp/Resources/ambient_waves.wav",
+      "path": "iosApp/iosApp/Resources/ambient_waves.mp3",
       "kind": "audio",
-      "sizeBytes": 96044,
+      "sizeBytes": 32400,
       "budgetBytes": 20480,
       "hardCeilingBytes": 96044,
       "platform": "ios",
-      "notes": "WAV. Should be re-encoded to AAC; see performance-budget.md."
+      "notes": "MP3 mono 32 kbps, 16 kHz, 8.1 s loop. Algorithmically synthesized slow ocean swell. No vocals, no music. Seamless loop boundary."
     },
     {
       "id": "ambient_white_noise_ios",
-      "path": "iosApp/iosApp/Resources/ambient_white_noise.wav",
+      "path": "iosApp/iosApp/Resources/ambient_white_noise.mp3",
       "kind": "audio",
-      "sizeBytes": 96044,
+      "sizeBytes": 32400,
       "budgetBytes": 20480,
       "hardCeilingBytes": 96044,
       "platform": "ios",
-      "notes": "WAV. Should be re-encoded to AAC; see performance-budget.md."
+      "notes": "MP3 mono 32 kbps, 16 kHz, 8.1 s loop. Algorithmically synthesized uniform white noise with light 6.5 kHz low-pass. No vocals, no music."
     }
   ],
   "totals": {
@@ -77,14 +77,14 @@
       "assetBytes": 30616
     },
     "android": {
-      "audioBytes": 288132,
-      "assetBytes": 318748,
+      "audioBytes": 97200,
+      "assetBytes": 127816,
       "budgetBytes": 61440,
       "hardCeilingBytes": 318748
     },
     "ios": {
-      "audioBytes": 288132,
-      "assetBytes": 318748,
+      "audioBytes": 97200,
+      "assetBytes": 127816,
       "budgetBytes": 61440,
       "hardCeilingBytes": 318748
     }

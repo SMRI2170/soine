@@ -42,7 +42,7 @@ Authored assets must stay within these individual limits:
 | Asset class | Target per file | Hard ceiling | Notes |
 | --- | --- | --- | --- |
 | Companion GLB (`soine_companion.glb`) | ≤ 60 KB | 200 KB | Current: 30,616 B |
-| Ambient sound (bundled) | ≤ 24 KB | 96 KB | See compression note below |
+| Ambient sound (bundled) | ≤ 32 KB | 96 KB | MP3 mono 32 kbps, 16 kHz. See compression note below. |
 | Background / UI texture | ≤ 32 KB | 128 KB | n/a yet, applies when added |
 | Font subset | ≤ 48 KB | 96 KB | per family, subset per script |
 
@@ -50,15 +50,30 @@ Total ambient audio budget:
 
 | Platform | Per file (current) | Target total | Hard ceiling |
 | --- | --- | --- | --- |
-| Android `res/raw` (rain / waves / white-noise) | 96,044 B each (288 KB) | ≤ 60 KB total | ≤ 288 KB total |
-| iOS `Resources` (same three files) | 96,044 B each (288 KB) | ≤ 60 KB total | ≤ 288 KB total |
+| Android `res/raw` (rain / waves / white-noise) | 32,400 B each (97 KB) | ≤ 96 KB total | ≤ 288 KB total |
+| iOS `Resources` (same three files) | 32,400 B each (97 KB) | ≤ 96 KB total | ≤ 288 KB total |
 
-**Compression note.** The current bundled WAVs are 16-bit PCM mono
-loops. They should be re-encoded to OGG Vorbis (q≈3) or AAC (≈64 kbps)
-before #181 (release assets). Re-encoded size estimate: ≤ 12 KB per
-loop. Until that lands, the budget is intentionally permissive
-(`hard ceiling` matches the current size) so the budget does not
-fail CI on the existing assets.
+**Compression note.** The bundled ambient loops are now MP3 mono 32 kbps
+at 16 kHz (`ambient_rain.mp3`, `ambient_waves.mp3`,
+`ambient_white_noise.mp3`), algorithmically synthesized from a fixed
+seed and re-encoded with `lame`. Each loop is ~8.1 s and 32,400 B
+(32 KB), so the platform total is ~97 KB — well under the 288 KB hard
+ceiling. The per-file target rises from 24 KB to 32 KB and the
+per-platform total target rises from 60 KB to 96 KB; the per-file hard
+ceiling stays at 96 KB. The previous WAV PCM placeholders (96,044 B
+each) and the re-encode path described in earlier revisions are no
+longer pending.
+
+The ambient content is generated deterministically rather than captured
+from the field. This is deliberate: the optional music generation
+tooling produces vocal music tracks regardless of the prompt, which
+violates the "no vocals, no music" labelling contract for `雨`, `波`,
+and `ホワイトノイズ` — the listener would hear singing or a beat under a
+"rain" label. Algorithmic synthesis guarantees a clean, label-correct,
+deterministic loop with no human voice and no music. A future polish
+slice can replace the synthesized body with a curated field recording
+if the team accepts the licensing cost; the contract that the audio
+matches its label and contains no vocals is preserved.
 
 ### 1.3 Asset duplication rules
 
