@@ -77,10 +77,15 @@ class PerfBudgetContractTest {
     @Test
     fun ambientAudioHardCeilingIsPinned() {
         assertEquals(96L * 1024L, PerfBudget.Binary.MAX_AMBIENT_AUDIO_BYTES)
-        assertEquals(24L * 1024L, PerfBudget.Binary.TARGET_AMBIENT_AUDIO_BYTES)
-        // Total ambient audio budget.
+        // Bundled ambient loops are MP3 mono 32 kbps, ~8.1 s,
+        // 32,400 B per file. Target rises from 24 KB to 32 KB
+        // to match the algorithmically synthesized ambient audio
+        // produced by scripts/synth-ambient-audio.py. Hard ceiling
+        // stays at 96 KB.
+        assertEquals(32L * 1024L, PerfBudget.Binary.TARGET_AMBIENT_AUDIO_BYTES)
+        // Total ambient audio budget (3 loops).
         assertEquals(288L * 1024L, PerfBudget.Binary.MAX_TOTAL_AMBIENT_AUDIO_BYTES)
-        assertEquals(60L * 1024L, PerfBudget.Binary.TARGET_TOTAL_AMBIENT_AUDIO_BYTES)
+        assertEquals(96L * 1024L, PerfBudget.Binary.TARGET_TOTAL_AMBIENT_AUDIO_BYTES)
     }
 
     @Test
